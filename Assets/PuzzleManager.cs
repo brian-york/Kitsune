@@ -3,6 +3,13 @@ using UnityEngine;
 public class PuzzleManager : MonoBehaviour
 {
     public int[,] playerGrid = new int[9, 9];
+    public GameObject winText;
+
+    void Start()
+    {
+        if (winText != null)
+            winText.SetActive(false);
+    }
 
     // Called whenever a cell changes
     public void UpdateCell(int row, int col, int value)
@@ -21,14 +28,11 @@ public class PuzzleManager : MonoBehaviour
         if (IsComplete())
         {
             Debug.Log("🎉 Puzzle solved!");
-            // Optional: call a win screen or animation
-        }
-        if (IsComplete())
-        {
-    Debug.Log("🎉 Puzzle solved!");
-    winText.SetActive(true);
+            if (winText != null)
+                winText.SetActive(true);
         }
     }
+
     // Check rules for this cell
     public bool IsValid(int row, int col)
     {
@@ -65,7 +69,7 @@ public class PuzzleManager : MonoBehaviour
         return true;
     }
 
-    // Check if the entire grid is filled
+    // Check if the entire grid is filled and valid
     public bool IsComplete()
     {
         for (int r = 0; r < 9; r++)
@@ -82,5 +86,16 @@ public class PuzzleManager : MonoBehaviour
 
         return true;
     }
-    public GameObject winText;
+
+    // Called when loading a new puzzle
+    public void LoadPuzzle(int[,] puzzle)
+    {
+        for (int row = 0; row < 9; row++)
+        {
+            for (int col = 0; col < 9; col++)
+            {
+                playerGrid[row, col] = puzzle[row, col];
+            }
+        }
+    }
 }

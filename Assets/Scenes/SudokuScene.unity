@@ -368,6 +368,7 @@ GameObject:
   m_Component:
   - component: {fileID: 497182338}
   - component: {fileID: 497182337}
+  - component: {fileID: 497182339}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -403,6 +404,22 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &497182339
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 497182336}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b3183556e409144390d8c59cde3da07, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  puzzleFileNames:
+  - Puzzles/puzzle001
+  - Puzzles/puzzle002
+  - Puzzles/puzzle003
 --- !u!1 &777486782
 GameObject:
   m_ObjectHideFlags: 0
@@ -586,7 +603,7 @@ GameObject:
   - component: {fileID: 1503290430}
   - component: {fileID: 1503290429}
   - component: {fileID: 1503290428}
-  - component: {fileID: 1503290427}
+  - component: {fileID: 1503290431}
   m_Layer: 5
   m_Name: SudokuGrid
   m_TagString: Untagged
@@ -613,19 +630,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 600, y: 600}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1503290427
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1503290425}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 759cf4e5b5d8ac048908b9fd5227f4f8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  cellPrefab: {fileID: 6027070810968948441, guid: 334553e77f348d34b85ee3e6c1d788c6, type: 3}
 --- !u!114 &1503290428
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -688,6 +692,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1503290425}
   m_CullTransparentMesh: 1
+--- !u!114 &1503290431
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1503290425}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 759cf4e5b5d8ac048908b9fd5227f4f8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cellPrefab: {fileID: 6027070810968948441, guid: 334553e77f348d34b85ee3e6c1d788c6, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
