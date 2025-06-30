@@ -149,6 +149,7 @@ GameObject:
   - component: {fileID: 2050572874880986666}
   - component: {fileID: 8143552884667711820}
   - component: {fileID: -1512487690174570220}
+  - component: {fileID: -8763635534802463810}
   m_Layer: 5
   m_Name: SudokuCell
   m_TagString: Untagged
@@ -327,6 +328,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68a2288ddefe9354cbec5f49ff9bf9c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &-8763635534802463810
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6027070810968948441}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 53676bb97778c6147b27be43e640e58f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  row: 0
+  col: 0
 --- !u!1 &8084784489679468794
 GameObject:
   m_ObjectHideFlags: 0

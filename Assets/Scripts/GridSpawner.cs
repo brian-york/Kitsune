@@ -21,7 +21,7 @@ public class GridSpawner : MonoBehaviour
             return;
         }
 
-        Debug.Log("First value in puzzle grid: " + puzzleData.grid[0]);
+        Debug.Log("Grid loaded with " + puzzleData.grid.Count + " cells.");
 
         int[,] puzzleGrid = new int[9, 9];
 
@@ -37,9 +37,41 @@ public class GridSpawner : MonoBehaviour
         GenerateGrid(puzzleGrid);
 
         PuzzleManager puzzleManager = FindFirstObjectByType<PuzzleManager>();
+        puzzleManager.isLoading = true;
         puzzleManager.LoadPuzzle(puzzleGrid);
+        puzzleManager.isLoading = false;
+
+        GenerateTilePool();
     }
 
+    public GameObject tileButton;
+public RectTransform tilePoolTransform;
+    void GenerateTilePool()
+    {
+        Debug.Log("tileButton: " + tileButton);
+        Debug.Log("tilePoolTransform: " + tilePoolTransform);
+
+        for (int i = 1; i <= 9; i++)
+        {
+            GameObject tileObj = Instantiate(tileButton, tilePoolTransform);
+            TileDragHandler handler = tileObj.GetComponent<TileDragHandler>();
+            handler.SetValue(i);
+        }
+    }
+public void CreateTile(int value)
+{
+    GameObject tileObj = Instantiate(tileButton, tilePoolTransform);
+    TileDragHandler handler = tileObj.GetComponent<TileDragHandler>();
+
+    if (handler != null)
+    {
+        handler.SetValue(value);
+    }
+    else
+    {
+        Debug.LogError("TileDragHandler missing from tileButton prefab!");
+    }
+}
     void GenerateGrid(int[,] puzzle)
     {
         for (int row = 0; row < 9; row++)
@@ -55,6 +87,13 @@ public class GridSpawner : MonoBehaviour
                 bool locked = value != 0;
 
                 cellController.SetupCell(row, col);
+
+CellDropHandler dropHandler = newCell.GetComponent<CellDropHandler>();
+if (dropHandler != null)
+{
+    dropHandler.row = row;
+    dropHandler.col = col;
+}
                 cellController.SetValue(value, locked);
             }
         }
