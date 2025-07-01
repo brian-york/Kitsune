@@ -368,7 +368,6 @@ GameObject:
   - component: {fileID: 243020603}
   - component: {fileID: 243020606}
   - component: {fileID: 243020605}
-  - component: {fileID: 243020604}
   m_Layer: 5
   m_Name: TilePool
   m_TagString: Untagged
@@ -390,25 +389,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1359677661}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 200, y: -41.94675}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 400, y: 83.8935}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &243020604
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 243020602}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_HorizontalFit: 0
-  m_VerticalFit: 0
 --- !u!114 &243020605
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -455,6 +440,7 @@ GameObject:
   - component: {fileID: 497182337}
   - component: {fileID: 497182339}
   - component: {fileID: 497182340}
+  - component: {fileID: 497182341}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -521,6 +507,54 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentScore: 0
   scoreText: {fileID: 871259355}
+--- !u!114 &497182341
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 497182336}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 25ef0368e982a614a97275ecfff04ca2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  availableTiles:
+  - number: 5
+    tileColor: {r: 0, g: 0, b: 0, a: 0}
+    specialEffect: 
+    scoreBonus: 0
+    isWild: 0
+    narrativeTag: 
+    copies: 2
+  - number: 3
+    tileColor: {r: 0.8301887, g: 0.1527234, b: 0.1527234, a: 0}
+    specialEffect: 
+    scoreBonus: 0
+    isWild: 0
+    narrativeTag: 
+    copies: 2
+  - number: 2
+    tileColor: {r: 0.9292453, g: 1, b: 0.9900867, a: 0}
+    specialEffect: 
+    scoreBonus: 0
+    isWild: 0
+    narrativeTag: 
+    copies: 3
+  - number: 9
+    tileColor: {r: 0.9528302, g: 0.6179854, b: 0.05842829, a: 0}
+    specialEffect: Golden
+    scoreBonus: 10
+    isWild: 0
+    narrativeTag: 
+    copies: 2
+  - number: 1
+    tileColor: {r: 1, g: 1, b: 1, a: 0}
+    specialEffect: 
+    scoreBonus: 0
+    isWild: 1
+    narrativeTag: 
+    copies: 1
 --- !u!1 &777486782
 GameObject:
   m_ObjectHideFlags: 0
@@ -1040,6 +1074,7 @@ MonoBehaviour:
   cellPrefab: {fileID: 6027070810968948441, guid: 334553e77f348d34b85ee3e6c1d788c6, type: 3}
   tileButton: {fileID: 1748675775366137949, guid: c0a6e0b28685c1248b9e6557c37148cd, type: 3}
   tilePoolTransform: {fileID: 243020603}
+  poolManager: {fileID: 497182341}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

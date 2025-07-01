@@ -25,18 +25,19 @@ public class CellDropHandler : MonoBehaviour, IDropHandler
             CellController cellController = GetComponent<CellController>();
             if (cellController != null)
             {
-                cellController.SetValue(tile.tileValue, false);
+                cellController.SetValue(tile.tileValue, true);
             }
 
             // Destroy the placed tile
-            Destroy(tile.gameObject);
+Destroy(tile.gameObject);
 
-            // Spawn a new tile of the same value back into the pool
-            GridSpawner gridSpawner = FindFirstObjectByType<GridSpawner>();
-            if (gridSpawner != null)
-            {
-                gridSpawner.CreateTile(tile.tileValue);
-            }
+// Refill the tile hand to keep it at 3
+GridSpawner gridSpawner = FindFirstObjectByType<GridSpawner>();
+
+if (gridSpawner != null)
+{
+    gridSpawner.RefillTileHand();
+}
         }
     }
 }

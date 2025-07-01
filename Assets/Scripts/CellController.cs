@@ -69,4 +69,9 @@ public class CellController : MonoBehaviour
 
         inputField.interactable = !locked;
     }
+    
+    public void SetInteractable(bool state)
+    {
+        inputField.interactable = state;
+    }
 }

@@ -41,12 +41,20 @@ public class TileDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         rectTransform.anchoredPosition = Vector2.zero;
     }
 
-    public void SetValue(int value)
+    public void SetTileData(TileData tileData)
+{
+    tileValue = tileData.number;
+
+    if (numberText != null)
     {
-        tileValue = value;
-        if (numberText != null)
-        {
-            numberText.text = value.ToString();
-        }
+        numberText.text = tileData.number.ToString();
     }
+
+    // Optional: Apply tile color
+    UnityEngine.UI.Image img = GetComponent<UnityEngine.UI.Image>();
+    if (img != null)
+    {
+        img.color = tileData.tileColor;
+    }
+}
 }
