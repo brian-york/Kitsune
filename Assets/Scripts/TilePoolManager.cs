@@ -23,7 +23,7 @@ public class TilePoolManager : MonoBehaviour
             tilePool.Add(new TileData(
                 tile.number,
                 tile.tileColor,
-                tile.specialEffect,
+                tile.tileEffect,
                 tile.scoreBonus,
                 tile.isWild,
                 tile.narrativeTag

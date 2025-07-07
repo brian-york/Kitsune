@@ -12,47 +12,74 @@ public class PuzzleManager : MonoBehaviour
     }
     
     public bool isLoading = false;
-    
 
- public void UpdateCell(int row, int col, int value)
+
+    public void UpdateCell(int row, int col, int value)
+    {
+        // ✅ Skip scoring during puzzle loading
+        if (isLoading)
+        {
+            return;
+        }
+
+        // ✅ Store the player's value in the grid
+        playerGrid[row, col] = value;
+
+        // ✅ Find the ScoreManager in the scene
+        ScoreManager scoreManager = FindFirstObjectByType<ScoreManager>();
+
+        // ✅ Validate the move
+        if (!IsValid(row, col))
+        {
+            Debug.Log($"Invalid value at [{row},{col}]");
+        }
+        else
+        {
+            Debug.Log("So far, valid!");
+        }
+
+
+
+        // ✅ Check for puzzle completion
+        if (IsComplete())
+        {
+            Debug.Log("🎉 Puzzle solved!");
+            if (winText != null)
+                winText.SetActive(true);
+        }
+    }
+public bool IsValid(int row, int col, int value)
 {
-    // ✅ Skip scoring during puzzle loading
-    if (isLoading)
+    if (value == 0) return true;
+
+    // Check row
+    for (int c = 0; c < 9; c++)
     {
-        return;
+        if (c != col && playerGrid[row, c] == value)
+            return false;
     }
 
-    // ✅ Store the player's value in the grid
-    playerGrid[row, col] = value;
-
-    // ✅ Find the ScoreManager in the scene
-    ScoreManager scoreManager = FindFirstObjectByType<ScoreManager>();
-
-    // ✅ Validate the move
-    if (!IsValid(row, col))
+    // Check column
+    for (int r = 0; r < 9; r++)
     {
-        Debug.Log($"Invalid value at [{row},{col}]");
-        if (scoreManager != null)
+        if (r != row && playerGrid[r, col] == value)
+            return false;
+    }
+
+    // Check 3×3 block
+    int boxRowStart = (row / 3) * 3;
+    int boxColStart = (col / 3) * 3;
+
+    for (int r = boxRowStart; r < boxRowStart + 3; r++)
+    {
+        for (int c = boxColStart; c < boxColStart + 3; c++)
         {
-            scoreManager.SubtractPoints(1);
+            if ((r != row || c != col) && playerGrid[r, c] == value)
+                return false;
         }
     }
-    else
-    {
-        Debug.Log("So far, valid!");
-        if (scoreManager != null)
-        {
-            scoreManager.AddPoints(10);
-        }
-    }
 
-    // ✅ Check for puzzle completion
-    if (IsComplete())
-    {
-        Debug.Log("🎉 Puzzle solved!");
-        if (winText != null)
-            winText.SetActive(true);
-    }
+    return true;
 }
     public bool IsValid(int row, int col)
     {

@@ -5,11 +5,14 @@ using TMPro;
 public class TileDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     public int tileValue;
+    public TileEffect tileEffect;
+    public int scoreBonus;
     public TextMeshProUGUI numberText;
-
+    public TileData tileData;
     private CanvasGroup canvasGroup;
     private RectTransform rectTransform;
     private Transform originalParent;
+   
 
     void Awake()
     {
@@ -43,7 +46,11 @@ public class TileDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
     public void SetTileData(TileData tileData)
 {
+    this.tileData = tileData;            // Save the entire TileData object here
+
     tileValue = tileData.number;
+    tileEffect = tileData.tileEffect;
+    scoreBonus = tileData.scoreBonus;
 
     if (numberText != null)
     {

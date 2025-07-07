@@ -440,6 +440,7 @@ GameObject:
   - component: {fileID: 497182337}
   - component: {fileID: 497182339}
   - component: {fileID: 497182340}
+  - component: {fileID: 497182342}
   - component: {fileID: 497182341}
   m_Layer: 0
   m_Name: GameManager
@@ -522,39 +523,58 @@ MonoBehaviour:
   availableTiles:
   - number: 5
     tileColor: {r: 0, g: 0, b: 0, a: 0}
-    specialEffect: 
-    scoreBonus: 0
+    tileEffect: 1
+    scoreBonus: 10
     isWild: 0
     narrativeTag: 
-    copies: 2
-  - number: 3
-    tileColor: {r: 0.8301887, g: 0.1527234, b: 0.1527234, a: 0}
-    specialEffect: 
-    scoreBonus: 0
-    isWild: 0
-    narrativeTag: 
-    copies: 2
-  - number: 2
-    tileColor: {r: 0.9292453, g: 1, b: 0.9900867, a: 0}
-    specialEffect: 
+    copies: 3
+  - number: 1
+    tileColor: {r: 0, g: 0, b: 0, a: 0}
+    tileEffect: 2
     scoreBonus: 0
     isWild: 0
     narrativeTag: 
     copies: 3
   - number: 9
-    tileColor: {r: 0.9528302, g: 0.6179854, b: 0.05842829, a: 0}
-    specialEffect: Golden
+    tileColor: {r: 0, g: 0, b: 0, a: 0}
+    tileEffect: 0
+    scoreBonus: 0
+    isWild: 0
+    narrativeTag: 
+    copies: 3
+  - number: 8
+    tileColor: {r: 0, g: 0, b: 0, a: 0}
+    tileEffect: 1
     scoreBonus: 10
     isWild: 0
     narrativeTag: 
-    copies: 2
-  - number: 1
-    tileColor: {r: 1, g: 1, b: 1, a: 0}
-    specialEffect: 
+    copies: 3
+  - number: 3
+    tileColor: {r: 0, g: 0, b: 0, a: 0}
+    tileEffect: 0
     scoreBonus: 0
-    isWild: 1
+    isWild: 0
     narrativeTag: 
-    copies: 1
+    copies: 3
+  - number: 6
+    tileColor: {r: 0, g: 0, b: 0, a: 0}
+    tileEffect: 1
+    scoreBonus: 0
+    isWild: 0
+    narrativeTag: 
+    copies: 3
+--- !u!114 &497182342
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 497182336}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ba703709744c2e4880e5d8dcf55bdf0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &777486782
 GameObject:
   m_ObjectHideFlags: 0

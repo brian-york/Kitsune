@@ -1,21 +1,33 @@
 using UnityEngine;
 
+public enum TileEffect
+{
+    None,
+    Booned,
+    Leaf,
+    Flame,
+    Baned,
+    Lunar,
+    Solar,
+    Portent,
+    Wild
+}
+
 [System.Serializable]
 public class TileData
 {
-    public int number;                  // The tile’s numeric value (e.g. 5)
-    public Color tileColor;             // Optional color highlight for visuals
-    public string specialEffect;        // Name of any special effect (e.g. "Burning")
-    public int scoreBonus;              // Extra score for playing this tile
-    public bool isWild;                 // True if the tile can be placed anywhere
-    public string narrativeTag;         // Used for story events or dialogue triggers
-    public int copies;                  // Used to classify copies of a tile
-
+    public int number;
+    public Color tileColor;
+    public TileEffect tileEffect;
+    public int scoreBonus;
+    public bool isWild;
+    public string narrativeTag;
+    public int copies;
 
     public TileData(
         int number,
         Color tileColor,
-        string specialEffect,
+        TileEffect tileEffect,
         int scoreBonus,
         bool isWild,
         string narrativeTag
@@ -23,18 +35,17 @@ public class TileData
     {
         this.number = number;
         this.tileColor = tileColor;
-        this.specialEffect = specialEffect;
+        this.tileEffect = tileEffect;
         this.scoreBonus = scoreBonus;
         this.isWild = isWild;
         this.narrativeTag = narrativeTag;
     }
 
-    // Convenience constructor for plain numeric tiles
     public TileData(int number)
     {
         this.number = number;
         this.tileColor = Color.white;
-        this.specialEffect = "";
+        this.tileEffect = TileEffect.None;
         this.scoreBonus = 0;
         this.isWild = false;
         this.narrativeTag = "";

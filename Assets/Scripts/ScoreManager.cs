@@ -6,14 +6,14 @@ public class ScoreManager : MonoBehaviour
     public int currentScore = 0;
     public TextMeshProUGUI scoreText;
 
-    void Start()
+    public void AddScore(int amount)
     {
+        currentScore += amount;
         UpdateScoreUI();
     }
 
-    public void AddPoints(int amount)
+    void Start()
     {
-        currentScore += amount;
         UpdateScoreUI();
     }
 
