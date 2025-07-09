@@ -14,6 +14,24 @@ public class CellDropHandler : MonoBehaviour, IDropHandler
 
     if (tile != null)
     {
+        // ✅ BLOCKED CELL CHECK:
+        CellController cellController = GetComponent<CellController>();
+        if (cellController != null && cellController.isBlocked)
+        {
+            Debug.Log($"Cell [{row},{col}] is blocked. Rejecting drop.");
+
+            Destroy(tile.gameObject);
+
+            // Draw a new tile to replace it
+            GridSpawner gridSpawner = FindFirstObjectByType<GridSpawner>();
+            if (gridSpawner != null)
+            {
+                gridSpawner.RefillTileHand();
+            }
+
+            return;
+        }
+
         Debug.Log($"Tile dropped on cell [{row},{col}] with value {tile.tileValue}");
 
         PuzzleManager puzzleManager = FindFirstObjectByType<PuzzleManager>();
@@ -23,10 +41,8 @@ public class CellDropHandler : MonoBehaviour, IDropHandler
             // INVALID PLACEMENT
             Debug.Log("❌ Invalid placement. Tile destroyed, no score given.");
 
-            // Destroy the tile
             Destroy(tile.gameObject);
 
-            // Draw a new tile to replace it
             GridSpawner gridSpawner = FindFirstObjectByType<GridSpawner>();
             if (gridSpawner != null)
             {
@@ -38,20 +54,25 @@ public class CellDropHandler : MonoBehaviour, IDropHandler
 
         puzzleManager.UpdateCell(row, col, tile.tileValue);
 
-        CellController cellController = GetComponent<CellController>();
         if (cellController != null)
         {
             cellController.SetValue(tile.tileValue, true);
         }
 
         ScoringManager scoringManager = FindFirstObjectByType<ScoringManager>();
-ScoreManager scoreManager = FindFirstObjectByType<ScoreManager>();
+        ScoreManager scoreManager = FindFirstObjectByType<ScoreManager>();
 
-if (scoringManager != null && scoreManager != null)
-{
-    int points = scoringManager.CalculateTileScore(row, col, tile.tileData, puzzleManager.playerGrid);
-    scoreManager.AddScore(points);
-}
+        if (scoringManager != null && scoreManager != null)
+        {
+            int points = scoringManager.CalculateTileScore(row, col, tile.tileData, puzzleManager.playerGrid);
+            scoreManager.AddScore(points);
+
+            GameManager gm = FindFirstObjectByType<GameManager>();
+            if (gm != null)
+            {
+                gm.CheckForLevelComplete(scoreManager.currentScore);
+            }
+        }
 
         Destroy(tile.gameObject);
 
@@ -62,4 +83,7 @@ if (scoringManager != null && scoreManager != null)
         }
     }
 }
+
+
+
 }

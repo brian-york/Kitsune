@@ -3,38 +3,108 @@ using UnityEngine;
 public class ScoringManager : MonoBehaviour
 {
     public int CalculateTileScore(int row, int col, TileData tile, int[,] playerGrid)
-    {
-        int basePoints = tile.number;
+{
+    int basePoints = tile.number;
 
-        // Sum values in the same 3x3 box
-        int boxSum = SumBox(row, col, playerGrid);
+    int boxSum = SumBox(row, col, playerGrid);
+    int rowSum = SumRow(row, playerGrid);
+    int colSum = SumColumn(col, playerGrid);
 
-        // Sum values in the same row
-        int rowSum = SumRow(row, playerGrid);
+    int points = basePoints + boxSum + rowSum + colSum;
 
-        // Sum values in the same column
-        int colSum = SumColumn(col, playerGrid);
+    float multiplier = CalculateCompletionMultiplier(row, col, playerGrid);
+    points = Mathf.RoundToInt(points * multiplier);
 
-        int points = basePoints + boxSum + rowSum + colSum;
+        GameManager gm = FindFirstObjectByType<GameManager>();
 
-        // Apply tile-specific effects
+
+        int tileEffectBonus = 0;
+
         if (tile.tileEffect == TileEffect.Booned)
+{
+    tileEffectBonus += tile.scoreBonus;
+    points += tile.scoreBonus;
+}
+else if (tile.tileEffect == TileEffect.Leaf)
+{
+    float leafMultiplier = 2f;
+
+    if (gm != null && gm.activeRelics != null)
+    {
+        foreach (var relic in gm.activeRelics)
         {
-            points += tile.scoreBonus;
+            if (relic is YakoCloverRelic)
+            {
+                Debug.Log("Yako’s Clover relic triggered! Using triple multiplier.");
+                leafMultiplier = 3f;
+                break;
+            }
         }
-        else if (tile.tileEffect == TileEffect.Leaf)
-        {
-            points *= 2;
-        }
-
-        // Check for completion multipliers
-        float multiplier = CalculateCompletionMultiplier(row, col, playerGrid);
-        points = Mathf.RoundToInt(points * multiplier);
-
-        Debug.Log($"Score breakdown for placed tile {tile.number}: Base={basePoints}, Box={boxSum}, Row={rowSum}, Col={colSum}, Multiplier={multiplier} → Total={points}");
-
-        return points;
     }
+
+
+    tileEffectBonus = points;
+    points = Mathf.RoundToInt(points * leafMultiplier);
+}
+
+
+    int relicBonus = 0;
+    int beforeRelics = points;
+
+   
+
+    if (gm != null && gm.activeRelics != null)
+    {
+        foreach (var relic in gm.activeRelics)
+        {
+            int newPoints = relic.ModifyScore(points, tile);
+
+            if (newPoints != points)
+            {
+                relicBonus += newPoints - points;
+            }
+
+            points = newPoints;
+        }
+    }
+
+// Check for column completion relics like Bamboo Shute
+bool colComplete = IsColumnComplete(col, playerGrid);
+
+if (colComplete && gm != null && gm.activeRelics != null)
+{
+    foreach (var relic in gm.activeRelics)
+    {
+        if (relic is BambooShuteRelic bambooRelic)
+        {
+            Debug.Log("🌿 Bamboo Shute relic triggered! +100 points for column completion.");
+            relicBonus += bambooRelic.BonusForColumnCompletion;
+            points += bambooRelic.BonusForColumnCompletion;
+        }
+    }
+}
+
+
+        Debug.Log(
+        $"Score breakdown for tile {tile.number}: " +
+        $"Base={basePoints}, Box={boxSum}, Row={rowSum}, Col={colSum}, Multiplier={multiplier}, " +
+        $"TileEffectBonus={tileEffectBonus}, RelicBonus={relicBonus} → Total={points}"
+    );
+
+    return points;
+}
+private bool IsColumnComplete(int col, int[,] grid)
+{
+    for (int row = 0; row < 9; row++)
+    {
+        if (grid[row, col] == 0)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 
     int SumBox(int row, int col, int[,] grid)
     {

@@ -7,7 +7,10 @@ public class CellController : MonoBehaviour
     private int row;
     private int column;
 
+    public string cellState = "Playable";
     private PuzzleManager puzzleManager;
+
+    public bool isBlocked = false;
 
     void Awake()
     {
@@ -27,6 +30,10 @@ public class CellController : MonoBehaviour
 
     void OnCellValueChanged(string text)
     {
+        // ✅ Ignore any input if this cell is blocked
+        if (isBlocked)
+            return;
+
         int value = 0;
 
         if (!string.IsNullOrEmpty(text))
@@ -52,11 +59,11 @@ public class CellController : MonoBehaviour
 
         if (puzzleManager.IsValid(row, column))
         {
-            GetComponent<TMP_InputField>().image.color = Color.white;
+            inputField.image.color = Color.white;
         }
         else
         {
-            GetComponent<TMP_InputField>().image.color = Color.red;
+            inputField.image.color = Color.red;
         }
     }
 
@@ -69,9 +76,32 @@ public class CellController : MonoBehaviour
 
         inputField.interactable = !locked;
     }
-    
+
+    public void SetBlocked(bool blocked)
+    {
+        isBlocked = blocked;
+
+        if (inputField != null)
+        {
+            if (blocked)
+            {
+                inputField.image.color = Color.black;
+                inputField.interactable = false;
+                inputField.text = "";
+            }
+            else
+            {
+                inputField.image.color = Color.white;
+                inputField.interactable = true;
+            }
+        }
+    }
+
     public void SetInteractable(bool state)
     {
-        inputField.interactable = state;
+        if (!isBlocked)
+        {
+            inputField.interactable = state;
+        }
     }
 }

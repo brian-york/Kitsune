@@ -7,4 +7,6 @@ public class PuzzleData
     public string difficulty;
     public string theme;
     public List<int> grid;
+    public List<string> cellStates;
+
 }
