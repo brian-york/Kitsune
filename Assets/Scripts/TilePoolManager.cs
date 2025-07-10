@@ -22,7 +22,7 @@ public class TilePoolManager : MonoBehaviour
         {
             tilePool.Add(new TileData(
                 tile.number,
-                tile.tileColor,
+                tile.tileColor != Color.clear ? tile.tileColor : KitsuneColors.WashedRicePaper,
                 tile.tileEffect,
                 tile.scoreBonus,
                 tile.isWild,

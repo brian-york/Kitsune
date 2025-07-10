@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 7628378402549366919}
   - component: {fileID: 6306620117736506796}
   - component: {fileID: -5703110696171174648}
+  - component: {fileID: 3843525498254054362}
   m_Layer: 5
   m_Name: TileButton
   m_TagString: Untagged
@@ -70,7 +71,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -148,7 +149,32 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tileValue: 0
+  tileEffect: 0
+  scoreBonus: 0
   numberText: {fileID: 8314901998832410466}
+  tileData:
+    number: 0
+    tileColor: {r: 0, g: 0, b: 0, a: 0}
+    tileEffect: 0
+    scoreBonus: 0
+    isWild: 0
+    narrativeTag: 
+    copies: 0
+--- !u!114 &3843525498254054362
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1748675775366137949}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cfabb0440166ab443bba8876756fdfa9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_EffectColor: {r: 0, g: 0, b: 0, a: 0.5}
+  m_EffectDistance: {x: 1, y: -1}
+  m_UseGraphicAlpha: 1
 --- !u!1 &5320587245388371949
 GameObject:
   m_ObjectHideFlags: 0

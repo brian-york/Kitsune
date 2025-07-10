@@ -59,9 +59,15 @@ public class TileDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
     // Optional: Apply tile color
     UnityEngine.UI.Image img = GetComponent<UnityEngine.UI.Image>();
-    if (img != null)
-    {
-        img.color = tileData.tileColor;
-    }
+if (img != null)
+{
+    img.color = tileData.tileColor;
+    Debug.Log($"Tile color set to: {tileData.tileColor}");
+}
+else
+{
+    Debug.LogError("No Image component found on TileDragHandler object!");
+}
+
 }
 }

@@ -44,7 +44,7 @@ public class TileData
     public TileData(int number)
     {
         this.number = number;
-        this.tileColor = Color.white;
+        this.tileColor = KitsuneColors.WashedRicePaper;
         this.tileEffect = TileEffect.None;
         this.scoreBonus = 0;
         this.isWild = false;

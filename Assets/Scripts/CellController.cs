@@ -57,29 +57,46 @@ public class CellController : MonoBehaviour
 
         puzzleManager.UpdateCell(row, column, value);
 
-        if (puzzleManager.IsValid(row, column))
-        {
-            inputField.image.color = Color.white;
-        }
-        else
-        {
-            inputField.image.color = Color.red;
-        }
+        var textComponent = inputField.transform.Find("Text Area/Text")?.GetComponent<TextMeshProUGUI>();
+
+if (puzzleManager.IsValid(row, column))
+{
+    inputField.image.color = Color.white;
+    if (textComponent != null)
+        textComponent.color = KitsuneColors.DriedInkBrown;
+}
+else
+{
+    inputField.image.color = Color.red;
+    if (textComponent != null)
+        textComponent.color = Color.white;
+}
+
     }
 
     public void SetValue(int value, bool locked)
-    {
-        if (value > 0)
-            inputField.SetTextWithoutNotify(value.ToString());
-        else
-            inputField.text = "";
+{
+    if (value > 0)
+        inputField.SetTextWithoutNotify(value.ToString());
+    else
+        inputField.text = "";
 
-        inputField.interactable = !locked;
-    }
+    inputField.interactable = !locked;
+
+    var textComponent = inputField.transform.Find("Text Area/Text")?.GetComponent<TextMeshProUGUI>();
+if (textComponent != null)
+{
+    textComponent.color = KitsuneColors.DriedInkBrown;
+}
+
+}
+
 
     public void SetBlocked(bool blocked)
     {
         isBlocked = blocked;
+
+         var textComponent = inputField.transform.Find("Text Area/Text")?.GetComponent<TextMeshProUGUI>();
 
         if (inputField != null)
         {
@@ -88,11 +105,17 @@ public class CellController : MonoBehaviour
                 inputField.image.color = Color.black;
                 inputField.interactable = false;
                 inputField.text = "";
+
+                if (textComponent != null)
+                    textComponent.color = Color.white;
             }
             else
             {
                 inputField.image.color = Color.white;
                 inputField.interactable = true;
+                
+                if (textComponent != null)
+                textComponent.color = KitsuneColors.DriedInkBrown;
             }
         }
     }
