@@ -57,15 +57,41 @@ public class GridSpawner : MonoBehaviour
 
     Debug.Log("Grid loaded with " + puzzleData.grid.Count + " cells.");
 
-    if (puzzleData.cellStates != null)
+        if (puzzleData.cellStates != null)
+        {
+            Debug.Log("cellStates found! Rows: " + puzzleData.cellStates.Count);
+            Debug.Log("First row states: " + string.Join(",", puzzleData.cellStates[0]));
+        }
+        else
+        {
+            Debug.Log("cellStates is NULL!");
+        }
+string[,] narrativeDescriptions = new string[9, 9];
+
+if (puzzleData.narrativeCellDescriptions != null && puzzleData.narrativeCellDescriptions.Count > 0)
 {
-    Debug.Log("cellStates found! Rows: " + puzzleData.cellStates.Count);
-    Debug.Log("First row states: " + string.Join(",", puzzleData.cellStates[0]));
+    for (int row = 0; row < 9; row++)
+    {
+        for (int col = 0; col < 9; col++)
+        {
+            int index = row * 9 + col;
+            narrativeDescriptions[row, col] = puzzleData.narrativeCellDescriptions[index];
+        }
+    }
+
+    Debug.Log("Narrative cell descriptions loaded.");
 }
 else
 {
-    Debug.Log("cellStates is NULL!");
+    for (int row = 0; row < 9; row++)
+    {
+        for (int col = 0; col < 9; col++)
+        {
+            narrativeDescriptions[row, col] = "";
+        }
+    }
 }
+
 
 
     int[,] puzzleGrid = new int[9, 9];
@@ -135,7 +161,8 @@ else
     }
 
     // Pass cellStates into GenerateGrid
-    GenerateGrid(puzzleGrid, cellStates);
+    GenerateGrid(puzzleGrid, cellStates, narrativeDescriptions);
+
 }
 
 
@@ -182,7 +209,8 @@ else
             }
         }
     }
-void GenerateGrid(int[,] puzzle, string[,] cellStates)
+void GenerateGrid(int[,] puzzle, string[,] cellStates, string[,] narrativeDescriptions)
+
 
     {
         for (int row = 0; row < 9; row++)
@@ -196,7 +224,31 @@ void GenerateGrid(int[,] puzzle, string[,] cellStates)
 GameObject newCell = Instantiate(cellPrefab, transform);
 newCell.name = $"Cell_{row}_{col}";
 
-var cellController = newCell.GetComponent<CellController>();
+                var cellController = newCell.GetComponent<CellController>();
+cellController.narrativeDescription = narrativeDescriptions[row, col];
+
+
+if (!string.IsNullOrEmpty(narrativeDescriptions[row, col]))
+{
+    cellController.narrativeDescription = narrativeDescriptions[row, col];
+
+    // Example: Assign type based on description keyword
+    if (narrativeDescriptions[row, col].Contains("shop"))
+    {
+        cellController.narrativeCellType = CellController.NarrativeCellType.Shop;
+    }
+    else if (narrativeDescriptions[row, col].Contains("relic"))
+    {
+        cellController.narrativeCellType = CellController.NarrativeCellType.RelicReward;
+    }
+    else
+    {
+        cellController.narrativeCellType = CellController.NarrativeCellType.Event;
+    }
+
+    // ✅ NOW actually apply the color:
+    cellController.SetNarrativeCellColor();
+}
 
 int value = puzzle[row, col];
 bool locked = value != 0;

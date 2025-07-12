@@ -12,7 +12,7 @@ public class PuzzleLoader : MonoBehaviour
 {
 
 
-    string chosenFile = "Puzzles/puzzle004";
+    string chosenFile = "Puzzles/puzzle005";
 
     TextAsset jsonText = Resources.Load<TextAsset>(chosenFile);
 

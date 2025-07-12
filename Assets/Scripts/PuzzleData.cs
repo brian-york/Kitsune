@@ -8,5 +8,7 @@ public class PuzzleData
     public string theme;
     public List<int> grid;
     public List<string> cellStates;
+    public List<string> narrativeCellDescriptions;
+
 
 }

@@ -2,12 +2,21 @@ using UnityEngine;
 
 public static class KitsuneColors
 {
-    public static Color SumiBlack = new Color32(0x1C, 0x1C, 0x1C, 255);
-    public static Color WashedRicePaper = new Color32(0xF5, 0xF1, 0xE6, 255);
-    public static Color KurenaiRed = new Color32(0xB0, 0x2E, 0x2A, 255);
-    public static Color KokeGreen = new Color32(0x3A, 0x57, 0x43, 255);
-    public static Color AonibiBlue = new Color32(0x4B, 0x64, 0x79, 255);
-    public static Color KinGold = new Color32(0xD4, 0xA4, 0x37, 255);
-    public static Color SakuraPink = new Color32(0xEF, 0xA6, 0xAA, 255);
-    public static Color DriedInkBrown = new Color32(74, 60, 50, 255);
+    public static readonly Color ShopCell = new Color(0.75f, 0.40f, 0.00f);
+    public static readonly Color EventCell = new Color(0.30f, 0.55f, 0.80f);
+    public static readonly Color BossCell = new Color(0.70f, 0.10f, 0.10f);
+    public static readonly Color RelicRewardCell = new Color(0.50f, 0.60f, 0.20f);
+
+    public static readonly Color WashedRicePaper = new Color(0.94f, 0.90f, 0.84f);
+    public static readonly Color KokeGreen = new Color(0.31f, 0.40f, 0.33f);
+    public static readonly Color AonibiBlue = new Color(0.24f, 0.33f, 0.40f);
+    public static readonly Color DriedInkBrown = new Color(0.25f, 0.20f, 0.15f);
 }
+
+
+//Color Name	Hex Code
+//WashedRicePaper	#F4F0E6
+//DarkBamboo	#756D5F
+//FoxRustRed	#A44E3F
+//DeepIndigoNight	#2E334B
+//DriedInkBrown	#5B4636

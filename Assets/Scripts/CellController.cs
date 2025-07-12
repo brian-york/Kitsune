@@ -1,16 +1,29 @@
 using UnityEngine;
 using TMPro;
+using UnityEngine.EventSystems;
 
-public class CellController : MonoBehaviour
+public class CellController : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     private TMP_InputField inputField;
     private int row;
     private int column;
 
     public string cellState = "Playable";
+    public string narrativeDescription;
     private PuzzleManager puzzleManager;
 
     public bool isBlocked = false;
+
+    public enum NarrativeCellType
+{
+    None,
+    Shop,
+    Event,
+    Boss,
+    RelicReward
+}
+
+public NarrativeCellType narrativeCellType = NarrativeCellType.None;
 
     void Awake()
     {
@@ -30,7 +43,6 @@ public class CellController : MonoBehaviour
 
     void OnCellValueChanged(string text)
     {
-        // ✅ Ignore any input if this cell is blocked
         if (isBlocked)
             return;
 
@@ -59,44 +71,55 @@ public class CellController : MonoBehaviour
 
         var textComponent = inputField.transform.Find("Text Area/Text")?.GetComponent<TextMeshProUGUI>();
 
-if (puzzleManager.IsValid(row, column))
+       if (puzzleManager.IsValid(row, column))
 {
-    inputField.image.color = Color.white;
-    if (textComponent != null)
-        textComponent.color = KitsuneColors.DriedInkBrown;
+    if (narrativeCellType == NarrativeCellType.None)
+    {
+        Debug.Log($"[OnCellValueChanged] Cell [{row},{column}] setting color to WHITE.");
+        inputField.image.color = Color.white;
+    }
+    else
+    {
+        Debug.Log($"[OnCellValueChanged] Cell [{row},{column}] preserving narrative color: {narrativeCellType}");
+    }
 }
 else
 {
+    Debug.Log($"[OnCellValueChanged] Cell [{row},{column}] setting color to RED.");
     inputField.image.color = Color.red;
-    if (textComponent != null)
-        textComponent.color = Color.white;
 }
+
 
     }
 
     public void SetValue(int value, bool locked)
-{
-    if (value > 0)
-        inputField.SetTextWithoutNotify(value.ToString());
-    else
-        inputField.text = "";
+    {
+        if (value > 0)
+            inputField.SetTextWithoutNotify(value.ToString());
+        else
+            inputField.text = "";
 
-    inputField.interactable = !locked;
+        inputField.interactable = !locked;
 
-    var textComponent = inputField.transform.Find("Text Area/Text")?.GetComponent<TextMeshProUGUI>();
-if (textComponent != null)
+        var textComponent = inputField.transform.Find("Text Area/Text")?.GetComponent<TextMeshProUGUI>();
+        if (textComponent != null)
+        {
+            textComponent.color = KitsuneColors.DriedInkBrown;
+        }
+
+        if (narrativeCellType != NarrativeCellType.None)
 {
-    textComponent.color = KitsuneColors.DriedInkBrown;
+    Debug.Log($"[SetValue] Re-applying narrative color for cell [{row},{column}]");
+    SetNarrativeCellColor();
 }
 
-}
-
+    }
 
     public void SetBlocked(bool blocked)
     {
         isBlocked = blocked;
 
-         var textComponent = inputField.transform.Find("Text Area/Text")?.GetComponent<TextMeshProUGUI>();
+        var textComponent = inputField.transform.Find("Text Area/Text")?.GetComponent<TextMeshProUGUI>();
 
         if (inputField != null)
         {
@@ -113,9 +136,9 @@ if (textComponent != null)
             {
                 inputField.image.color = Color.white;
                 inputField.interactable = true;
-                
+
                 if (textComponent != null)
-                textComponent.color = KitsuneColors.DriedInkBrown;
+                    textComponent.color = KitsuneColors.DriedInkBrown;
             }
         }
     }
@@ -127,4 +150,89 @@ if (textComponent != null)
             inputField.interactable = state;
         }
     }
+
+    /*public void SetNarrative(bool isNarrative)
+    {
+        
+        if (inputField != null)
+        {
+            inputField.image.color = isNarrative
+                ? KitsuneColors.AonibiBlue
+                : Color.white;
+        }
+    
+}*/
+
+public void SetNarrativeCellColor()
+{
+    if (narrativeCellType == NarrativeCellType.None)
+        return;
+
+    Color cellColor = Color.white;
+
+    switch (narrativeCellType)
+    {
+        case NarrativeCellType.Shop:
+            cellColor = KitsuneColors.ShopCell;
+            break;
+        case NarrativeCellType.Event:
+            cellColor = KitsuneColors.EventCell;
+            break;
+        case NarrativeCellType.Boss:
+            cellColor = KitsuneColors.BossCell;
+            break;
+        case NarrativeCellType.RelicReward:
+            cellColor = KitsuneColors.RelicRewardCell;
+            break;
+    }
+
+    if (inputField != null)
+    {
+        var colors = inputField.colors;
+        colors.normalColor = cellColor;
+        inputField.colors = colors;
+
+        Debug.Log($"[SetNarrativeCellColor] Assigned color {cellColor} to cell [{row},{column}] via ColorBlock.");
+    }
+}
+
+
+   public void OnPointerEnter(PointerEventData eventData)
+    {
+        UIManager ui = FindFirstObjectByType<UIManager>();
+
+        Debug.Log($"[ENTER] Cell [{row},{column}] narrativeDescription: {narrativeDescription}");
+
+        if (ui != null && !string.IsNullOrEmpty(narrativeDescription))
+        {
+            if (ui.currentlyHoveredCell != this)
+            {
+                Debug.Log("[ENTER] Showing tooltip.");
+                ui.currentlyHoveredCell = this;
+                ui.ShowNarrativeTooltip(narrativeDescription, Input.mousePosition);
+            }
+            else
+            {
+                Debug.Log("[ENTER] Skipped show, already hovering this cell.");
+            }
+        }
+    }
+
+   public void OnPointerExit(PointerEventData eventData)
+{
+    UIManager ui = FindFirstObjectByType<UIManager>();
+
+    Debug.Log($"[EXIT] Cell [{row},{column}] narrativeDescription: {narrativeDescription}");
+
+    if (ui != null && ui.currentlyHoveredCell == this)
+    {
+        Debug.Log("[EXIT] Hiding tooltip.");
+        ui.currentlyHoveredCell = null;
+        ui.HideNarrativeTooltip();
+    }
+    else
+    {
+        Debug.Log("[EXIT] No action taken on exit.");
+    }
+}
 }
