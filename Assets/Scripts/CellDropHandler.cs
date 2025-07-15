@@ -14,7 +14,7 @@ public class CellDropHandler : MonoBehaviour, IDropHandler
 
     if (tile != null)
     {
-        // ✅ BLOCKED CELL CHECK:
+        // ✅ BLOCKED CELL CHECK
         CellController cellController = GetComponent<CellController>();
         if (cellController != null && cellController.isBlocked)
         {
@@ -32,6 +32,7 @@ public class CellDropHandler : MonoBehaviour, IDropHandler
             return;
         }
 
+       
         Debug.Log($"Tile dropped on cell [{row},{col}] with value {tile.tileValue}");
 
         PuzzleManager puzzleManager = FindFirstObjectByType<PuzzleManager>();
@@ -52,11 +53,96 @@ public class CellDropHandler : MonoBehaviour, IDropHandler
             return; // abort the rest of OnDrop
         }
 
-        puzzleManager.UpdateCell(row, col, tile.tileValue);
+ // ✅ Narrative cell check
+if (cellController != null && cellController.narrativeCellType != CellController.NarrativeCellType.None)
+{
+    if (cellController.narrativeCondition != null && cellController.narrativeCondition.requiresSpecificTile)
+    {
+        if (tile.tileValue != cellController.narrativeCondition.requiredTileNumber)
+        {
+            Debug.Log($"Cell [{row},{col}] requires tile {cellController.narrativeCondition.requiredTileNumber}, but player tried {tile.tileValue}. Rejecting drop.");
+            
+            Destroy(tile.gameObject);
+
+            GridSpawner gridSpawner = FindFirstObjectByType<GridSpawner>();
+            if (gridSpawner != null)
+            {
+                gridSpawner.RefillTileHand();
+            }
+
+            return;
+        }
+        else
+        {
+            Debug.Log($"✅ Narrative condition met at cell [{row},{col}] for tile {tile.tileValue}!");
+
+            // Mark narrative as triggered
+            cellController.narrativeTriggered = true;
+
+            // Save it in the GameManager for post-win processing
+            GameManager gm = FindFirstObjectByType<GameManager>();
+            if (gm != null)
+            {
+                gm.lastTriggeredNarrative = cellController.narrativeDescription;
+                gm.lastTriggeredCellType = cellController.narrativeCellType;
+            }
+        }
+    }
+    else
+    {
+        // No specific tile required, automatically trigger
+        cellController.narrativeTriggered = true;
+
+        GameManager gm = FindFirstObjectByType<GameManager>();
+        if (gm != null)
+        {
+            gm.lastTriggeredNarrative = cellController.narrativeDescription;
+            gm.lastTriggeredCellType = cellController.narrativeCellType;
+        }
+    }
+}
+
+            // ✅ Update cell in puzzle grid
+            puzzleManager.UpdateCell(row, col, tile.tileValue);
 
         if (cellController != null)
         {
             cellController.SetValue(tile.tileValue, true);
+
+            // ✅ Check for narrative cell trigger
+            if (cellController.narrativeCellType != CellController.NarrativeCellType.None &&
+                !cellController.narrativeTriggered)
+            {
+                bool trigger = false;
+
+                if (cellController.narrativeCondition == null ||
+                    !cellController.narrativeCondition.requiresSpecificTile)
+                {
+                    trigger = true;
+                }
+                else
+                {
+                    if (tile.tileValue == cellController.narrativeCondition.requiredTileNumber ||
+                        tile.tileEffect == cellController.narrativeCondition.requiredTileEffect)
+                    {
+                        trigger = true;
+                    }
+                }
+
+                if (trigger)
+                {
+                    cellController.narrativeTriggered = true;
+
+                    Debug.Log($"🎴 Narrative cell triggered at [{row},{col}]: {cellController.narrativeDescription}");
+
+                    GameManager gm = FindFirstObjectByType<GameManager>();
+                    if (gm != null)
+                    {
+                        gm.lastTriggeredNarrative = cellController.narrativeDescription;
+                        gm.lastTriggeredCellType = cellController.narrativeCellType;
+                    }
+                }
+            }
         }
 
         ScoringManager scoringManager = FindFirstObjectByType<ScoringManager>();
@@ -64,8 +150,26 @@ public class CellDropHandler : MonoBehaviour, IDropHandler
 
         if (scoringManager != null && scoreManager != null)
         {
-            int points = scoringManager.CalculateTileScore(row, col, tile.tileData, puzzleManager.playerGrid);
-            scoreManager.AddScore(points);
+TileScoreBreakdown breakdown = scoringManager.CalculateTileScore(row, col, tile.tileData, puzzleManager.playerGrid);
+Vector3 cellWorldPos = transform.position;
+
+if (breakdown.basePoints > 0)
+    scoreManager.ShowPopup(breakdown.basePoints, "Base", cellWorldPos);
+if (breakdown.boxSum > 0)
+    scoreManager.ShowPopup(breakdown.boxSum, "Box Sum", cellWorldPos);
+if (breakdown.rowSum > 0)
+    scoreManager.ShowPopup(breakdown.rowSum, "Row Sum", cellWorldPos);
+if (breakdown.colSum > 0)
+    scoreManager.ShowPopup(breakdown.colSum, "Col Sum", cellWorldPos);
+if (breakdown.tileEffectBonus > 0)
+    scoreManager.ShowPopup(breakdown.tileEffectBonus, "Tile Bonus", cellWorldPos);
+if (breakdown.relicBonus > 0)
+    scoreManager.ShowPopup(breakdown.relicBonus, "Relic Bonus", cellWorldPos);
+
+// Finally add the total
+scoreManager.AddScore(breakdown.totalPoints);
+
+
 
             GameManager gm = FindFirstObjectByType<GameManager>();
             if (gm != null)
@@ -83,6 +187,7 @@ public class CellDropHandler : MonoBehaviour, IDropHandler
         }
     }
 }
+
 
 
 

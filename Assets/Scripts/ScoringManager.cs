@@ -2,109 +2,107 @@ using UnityEngine;
 
 public class ScoringManager : MonoBehaviour
 {
-    public int CalculateTileScore(int row, int col, TileData tile, int[,] playerGrid)
-{
-    int basePoints = tile.number;
+    public GameObject popupScorePrefab;
 
-    int boxSum = SumBox(row, col, playerGrid);
-    int rowSum = SumRow(row, playerGrid);
-    int colSum = SumColumn(col, playerGrid);
+    public TileScoreBreakdown CalculateTileScore(int row, int col, TileData tile, int[,] playerGrid)
+    {
+        TileScoreBreakdown breakdown = new TileScoreBreakdown();
 
-    int points = basePoints + boxSum + rowSum + colSum;
+        breakdown.basePoints = tile.number;
+        breakdown.boxSum = SumBox(row, col, playerGrid);
+        breakdown.rowSum = SumRow(row, playerGrid);
+        breakdown.colSum = SumColumn(col, playerGrid);
 
-    float multiplier = CalculateCompletionMultiplier(row, col, playerGrid);
-    points = Mathf.RoundToInt(points * multiplier);
+        int subtotal = breakdown.basePoints + breakdown.boxSum + breakdown.rowSum + breakdown.colSum;
 
-        GameManager gm = FindFirstObjectByType<GameManager>();
+        breakdown.multiplier = CalculateCompletionMultiplier(row, col, playerGrid);
+        subtotal = Mathf.RoundToInt(subtotal * breakdown.multiplier);
 
-
-        int tileEffectBonus = 0;
+        breakdown.tileEffectBonus = 0;
+        breakdown.relicBonus = 0;
 
         if (tile.tileEffect == TileEffect.Booned)
-{
-    tileEffectBonus += tile.scoreBonus;
-    points += tile.scoreBonus;
-}
-else if (tile.tileEffect == TileEffect.Leaf)
-{
-    float leafMultiplier = 2f;
-
-    if (gm != null && gm.activeRelics != null)
-    {
-        foreach (var relic in gm.activeRelics)
         {
-            if (relic is YakoCloverRelic)
-            {
-                Debug.Log("Yako’s Clover relic triggered! Using triple multiplier.");
-                leafMultiplier = 3f;
-                break;
-            }
+            breakdown.tileEffectBonus += tile.scoreBonus;
+            subtotal += tile.scoreBonus;
         }
-    }
-
-
-    tileEffectBonus = points;
-    points = Mathf.RoundToInt(points * leafMultiplier);
-}
-
-
-    int relicBonus = 0;
-    int beforeRelics = points;
-
-   
-
-    if (gm != null && gm.activeRelics != null)
-    {
-        foreach (var relic in gm.activeRelics)
+        else if (tile.tileEffect == TileEffect.Leaf)
         {
-            int newPoints = relic.ModifyScore(points, tile);
+            float leafMultiplier = 2f;
 
-            if (newPoints != points)
+            GameManager gm = FindFirstObjectByType<GameManager>();
+            if (gm != null && gm.activeRelics != null)
             {
-                relicBonus += newPoints - points;
+                foreach (var relic in gm.activeRelics)
+                {
+                    if (relic is YakoCloverRelic)
+                    {
+                        Debug.Log("Yako’s Clover relic triggered! Using triple multiplier.");
+                        leafMultiplier = 3f;
+                        break;
+                    }
+                }
             }
 
-            points = newPoints;
+            breakdown.tileEffectBonus = subtotal;
+            subtotal = Mathf.RoundToInt(subtotal * leafMultiplier);
         }
-    }
 
-// Check for column completion relics like Bamboo Shute
-bool colComplete = IsColumnComplete(col, playerGrid);
+        GameManager gm2 = FindFirstObjectByType<GameManager>();
 
-if (colComplete && gm != null && gm.activeRelics != null)
-{
-    foreach (var relic in gm.activeRelics)
-    {
-        if (relic is BambooShuteRelic bambooRelic)
+        if (gm2 != null && gm2.activeRelics != null)
         {
-            Debug.Log("🌿 Bamboo Shute relic triggered! +100 points for column completion.");
-            relicBonus += bambooRelic.BonusForColumnCompletion;
-            points += bambooRelic.BonusForColumnCompletion;
-        }
-    }
-}
+            foreach (var relic in gm2.activeRelics)
+            {
+                int newPoints = relic.ModifyScore(subtotal, tile);
 
+                if (newPoints != subtotal)
+                {
+                    breakdown.relicBonus += newPoints - subtotal;
+                }
+
+                subtotal = newPoints;
+            }
+        }
+
+        bool colComplete = IsColumnComplete(col, playerGrid);
+
+        if (colComplete && gm2 != null && gm2.activeRelics != null)
+        {
+            foreach (var relic in gm2.activeRelics)
+            {
+                if (relic is BambooShuteRelic bambooRelic)
+                {
+                    Debug.Log("🌿 Bamboo Shute relic triggered! +100 points for column completion.");
+                    breakdown.relicBonus += bambooRelic.BonusForColumnCompletion;
+                    subtotal += bambooRelic.BonusForColumnCompletion;
+                }
+            }
+        }
+
+        breakdown.totalPoints = subtotal;
 
         Debug.Log(
-        $"Score breakdown for tile {tile.number}: " +
-        $"Base={basePoints}, Box={boxSum}, Row={rowSum}, Col={colSum}, Multiplier={multiplier}, " +
-        $"TileEffectBonus={tileEffectBonus}, RelicBonus={relicBonus} → Total={points}"
-    );
+            $"Score breakdown for tile {tile.number}: " +
+            $"Base={breakdown.basePoints}, Box={breakdown.boxSum}, Row={breakdown.rowSum}, Col={breakdown.colSum}, " +
+            $"Multiplier={breakdown.multiplier}, TileEffectBonus={breakdown.tileEffectBonus}, RelicBonus={breakdown.relicBonus} → Total={breakdown.totalPoints}"
+        );
 
-    return points;
-}
-private bool IsColumnComplete(int col, int[,] grid)
-{
-    for (int row = 0; row < 9; row++)
-    {
-        if (grid[row, col] == 0)
-        {
-            return false;
-        }
+        return breakdown;
     }
-    return true;
-}
+    
 
+    private bool IsColumnComplete(int col, int[,] grid)
+    {
+        for (int row = 0; row < 9; row++)
+        {
+            if (grid[row, col] == 0)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
 
     int SumBox(int row, int col, int[,] grid)
     {

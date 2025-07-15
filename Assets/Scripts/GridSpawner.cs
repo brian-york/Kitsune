@@ -245,9 +245,16 @@ if (!string.IsNullOrEmpty(narrativeDescriptions[row, col]))
     {
         cellController.narrativeCellType = CellController.NarrativeCellType.Event;
     }
+ cellController.narrativeCondition = new NarrativeCondition();
 
-    // ✅ NOW actually apply the color:
-    cellController.SetNarrativeCellColor();
+ NarrativeRules rules = new NarrativeRules();
+
+if (cellController.narrativeCellType != CellController.NarrativeCellType.None)
+{
+    cellController.narrativeCondition = rules.GetCondition(cellController.narrativeCellType);
+    Debug.Log($"Assigned narrative condition for cell [{row},{col}]: requiresSpecificTile={cellController.narrativeCondition.requiresSpecificTile} number={cellController.narrativeCondition.requiredTileNumber} effect={cellController.narrativeCondition.requiredTileEffect}");
+}
+                    cellController.SetNarrativeCellColor();
 }
 
 int value = puzzle[row, col];

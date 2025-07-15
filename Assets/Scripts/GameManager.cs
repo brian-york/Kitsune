@@ -6,17 +6,19 @@ public class GameManager : MonoBehaviour
     public int scoreThreshold = 500;      // set in Inspector
 
     public List<Relic> activeRelics = new List<Relic>();
-
+    
+    public string lastTriggeredNarrative;
+    public CellController.NarrativeCellType lastTriggeredCellType;
     public void CheckForLevelComplete(int currentScore)
-{
-    if (currentScore >= scoreThreshold)
     {
-        Debug.Log("🎉 YOU WIN!");
-        UIManager ui = FindFirstObjectByType<UIManager>();
-        if (ui != null)
-            ui.ShowWinPanel(currentScore);
+        if (currentScore >= scoreThreshold)
+        {
+            Debug.Log("🎉 YOU WIN!");
+            UIManager ui = FindFirstObjectByType<UIManager>();
+            if (ui != null)
+                ui.ShowWinPanel(currentScore);
+        }
     }
-}
 
 public void TriggerGameOver()
 {

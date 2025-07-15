@@ -13,15 +13,16 @@ public class CellController : MonoBehaviour, IPointerEnterHandler, IPointerExitH
     private PuzzleManager puzzleManager;
 
     public bool isBlocked = false;
-
+    public bool narrativeTriggered = false;
+    public NarrativeCondition narrativeCondition;
     public enum NarrativeCellType
-{
-    None,
-    Shop,
-    Event,
-    Boss,
-    RelicReward
-}
+    {
+        None,
+        Shop,
+        Event,
+        Boss,
+        RelicReward
+    }
 
 public NarrativeCellType narrativeCellType = NarrativeCellType.None;
 
