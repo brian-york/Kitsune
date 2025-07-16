@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
-
+using System.Collections;
 
 public class CellDropHandler : MonoBehaviour, IDropHandler
 {
@@ -153,18 +153,30 @@ if (cellController != null && cellController.narrativeCellType != CellController
 TileScoreBreakdown breakdown = scoringManager.CalculateTileScore(row, col, tile.tileData, puzzleManager.playerGrid);
 Vector3 cellWorldPos = transform.position;
 
+// Define offsets for each popup type
+Vector3 tileOffset = Vector3.zero;
+Vector3 boxOffset = new Vector3(0, +50, 0);
+Vector3 rowOffset = new Vector3(-50, 0, 0);
+Vector3 colOffset = new Vector3(0, -50, 0);
+Vector3 tileEffectOffset = new Vector3(+50, 0, 0);
+Vector3 relicOffset = new Vector3(0, +100, 0);
+
+// Use delays so popups appear in sequence
+float delay = 0f;
+
 if (breakdown.basePoints > 0)
-    scoreManager.ShowPopup(breakdown.basePoints, "Base", cellWorldPos);
+    scoreManager.ShowPopupDelayed(breakdown.basePoints, "Tile", cellWorldPos + tileOffset, delay += 0.0f);
 if (breakdown.boxSum > 0)
-    scoreManager.ShowPopup(breakdown.boxSum, "Box Sum", cellWorldPos);
+    scoreManager.ShowPopupDelayed(breakdown.boxSum, "Box Sum", cellWorldPos + boxOffset, delay += 0.5f);
 if (breakdown.rowSum > 0)
-    scoreManager.ShowPopup(breakdown.rowSum, "Row Sum", cellWorldPos);
+    scoreManager.ShowPopupDelayed(breakdown.rowSum, "Row Sum", cellWorldPos + rowOffset, delay += 0.5f);
 if (breakdown.colSum > 0)
-    scoreManager.ShowPopup(breakdown.colSum, "Col Sum", cellWorldPos);
+    scoreManager.ShowPopupDelayed(breakdown.colSum, "Col Sum", cellWorldPos + colOffset, delay += 0.5f);
 if (breakdown.tileEffectBonus > 0)
-    scoreManager.ShowPopup(breakdown.tileEffectBonus, "Tile Bonus", cellWorldPos);
+    scoreManager.ShowPopupDelayed(breakdown.tileEffectBonus, "Tile Bonus", cellWorldPos + tileEffectOffset, delay += 0.5f);
 if (breakdown.relicBonus > 0)
-    scoreManager.ShowPopup(breakdown.relicBonus, "Relic Bonus", cellWorldPos);
+    scoreManager.ShowPopupDelayed(breakdown.relicBonus, "Relic Bonus", cellWorldPos + relicOffset, delay += 0.5f);
+
 
 // Finally add the total
 scoreManager.AddScore(breakdown.totalPoints);

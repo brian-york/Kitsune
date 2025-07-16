@@ -9,7 +9,7 @@ public class PopupScore : MonoBehaviour
 
     private float timer = 0f;
     private CanvasGroup canvasGroup;
-    private Vector3 startPos;
+    private Vector2 startPos;
 
     void Awake()
     {
@@ -22,7 +22,8 @@ public class PopupScore : MonoBehaviour
         timer += Time.deltaTime;
 
         // Move upward
-        transform.position = startPos + new Vector3(0, timer * moveSpeed, 0);
+       RectTransform rt = GetComponent<RectTransform>();
+rt.anchoredPosition = startPos + new Vector2(0, timer * moveSpeed);
 
         // Fade out
         if (canvasGroup != null)
@@ -36,15 +37,30 @@ public class PopupScore : MonoBehaviour
         }
     }
 
-    public void Initialize(int amount, Color color, Vector3 worldPosition)
-    {
-        text.text = $"+{amount}";
-        text.color = color;
+    public void Initialize(string textString, Color color, Vector3 worldPosition)
+{
+    if (text == null)
+        text = GetComponent<TextMeshProUGUI>();
 
-        // Convert world → screen
-        Vector3 screenPos = Camera.main.WorldToScreenPoint(worldPosition);
-        transform.position = screenPos;
+    text.text = textString;
+    text.color = color;
 
-        startPos = transform.position;
-    }
+    // Convert world position → screen position
+    Vector2 screenPos = Camera.main.WorldToScreenPoint(worldPosition);
+
+    // Convert screen → local position inside the popup canvas
+    RectTransformUtility.ScreenPointToLocalPointInRectangle(
+        transform.parent as RectTransform,
+        screenPos,
+        Camera.main,
+        out Vector2 localPoint
+    );
+
+    RectTransform rt = GetComponent<RectTransform>();
+    rt.anchoredPosition = localPoint;
+
+    startPos = localPoint;
+}
+
+
 }

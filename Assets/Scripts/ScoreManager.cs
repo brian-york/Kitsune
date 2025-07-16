@@ -1,6 +1,6 @@
 using UnityEngine;
 using TMPro;
-
+using System.Collections;
 public class ScoreManager : MonoBehaviour
 {
     public int currentScore = 0;
@@ -17,6 +17,15 @@ public class ScoreManager : MonoBehaviour
         {
             AddThreshold(gm.scoreThreshold);
         }
+
+        if (popupCanvasLayer == null)
+        {
+            var found = GameObject.Find("PopupCanvasLayer");
+            if (found != null)
+                popupCanvasLayer = found.transform;
+            else
+                Debug.LogError("PopupCanvasLayer not found!");
+        }
     }
 
     public void AddThreshold(int threshold)
@@ -31,19 +40,24 @@ public class ScoreManager : MonoBehaviour
         UpdateScoreUI();
     }
 
-    public void ShowPopup(int amount, string label, Vector3 worldPosition)
+    public void ShowPopup(int amount, string label, Vector3 worldPos)
     {
-        if (popupScorePrefab != null)
+
+        if (popupScorePrefab == null || popupCanvasLayer == null)
         {
-            var popupGO = Instantiate(popupScorePrefab, transform.root);
-            var popup = popupGO.GetComponent<PopupScore>();
-
-            Color color = KitsuneColors.DriedInkBrown;
-            if (amount >= 50) color = KitsuneColors.KokeGreen;
-
-            string text = $"+{amount} ({label})";
-            popup.Initialize(amount, color, worldPosition);
+            Debug.LogError("Popup prefab or canvas layer missing!");
+            return;
         }
+
+        var popupGO = Instantiate(popupScorePrefab, popupCanvasLayer.transform);
+        var popup = popupGO.GetComponent<PopupScore>();
+
+        Color color = KitsuneColors.DriedInkBrown;
+        if (amount >= 50)
+            color = KitsuneColors.KokeGreen;
+
+        string display = $"+{amount} ({label})";
+        popup.Initialize(display, color, worldPos);
     }
 
     private void UpdateScoreUI()
@@ -63,4 +77,16 @@ public class ScoreManager : MonoBehaviour
         if (currentScore < 0) currentScore = 0;
         UpdateScoreUI();
     }
+    
+    public void ShowPopupDelayed(int amount, string label, Vector3 worldPos, float delaySeconds)
+{
+    StartCoroutine(ShowPopupCoroutine(amount, label, worldPos, delaySeconds));
+}
+
+private IEnumerator ShowPopupCoroutine(int amount, string label, Vector3 worldPos, float delay)
+{
+    yield return new WaitForSeconds(delay);
+    ShowPopup(amount, label, worldPos);
+}
+
 }

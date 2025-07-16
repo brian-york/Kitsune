@@ -355,6 +355,7 @@ RectTransform:
   - {fileID: 297552193}
   - {fileID: 454477042}
   - {fileID: 426789972}
+  - {fileID: 588382366}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -1155,7 +1156,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentScore: 0
   scoreText: {fileID: 871259355}
-  popupScorePrefab: {fileID: 0}
+  popupScorePrefab: {fileID: 6769795063862575237, guid: b0adad58abccc8a4f9d1e9161fd8cd5e, type: 3}
+  popupCanvasLayer: {fileID: 588382366}
 --- !u!114 &497182341
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1202,7 +1204,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9ba703709744c2e4880e5d8dcf55bdf0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  popupScorePrefab: {fileID: 6152892427363079997, guid: b0adad58abccc8a4f9d1e9161fd8cd5e, type: 3}
+  popupScorePrefab: {fileID: 0}
 --- !u!114 &497182343
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1220,6 +1222,41 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 1a11fb60338e40440bfaa51cfda6debc, type: 2}
   lastTriggeredNarrative: 
   lastTriggeredCellType: 0
+--- !u!1 &588382365
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 588382366}
+  m_Layer: 5
+  m_Name: PopupCanvasLayer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &588382366
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 588382365}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 24533927}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: -1940, y: -916}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &625210795
 GameObject:
   m_ObjectHideFlags: 0
@@ -2104,6 +2141,7 @@ MonoBehaviour:
   currentScore: 0
   scoreText: {fileID: 0}
   popupScorePrefab: {fileID: 0}
+  popupCanvasLayer: {fileID: 0}
 --- !u!1 &1498481260
 GameObject:
   m_ObjectHideFlags: 0
