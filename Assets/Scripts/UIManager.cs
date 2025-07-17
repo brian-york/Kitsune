@@ -34,6 +34,10 @@ public class UIManager : MonoBehaviour
             gameOverPanel.SetActive(true);
     }
 
+public void ReturnToMap()
+{
+    SceneManager.LoadScene("MapScene");
+}
     public void RestartGame()
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);

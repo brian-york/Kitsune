@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
-using System.Collections;
+
 
 public class CellDropHandler : MonoBehaviour, IDropHandler
 {

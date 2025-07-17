@@ -31,6 +31,7 @@ public NarrativeCellType narrativeCellType = NarrativeCellType.None;
         inputField = GetComponent<TMP_InputField>();
         inputField.characterLimit = 1;
         inputField.onValueChanged.AddListener(OnCellValueChanged);
+        inputField.readOnly = true;
 
         // Find the PuzzleManager in the scene
         puzzleManager = FindFirstObjectByType<PuzzleManager>();

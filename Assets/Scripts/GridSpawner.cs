@@ -42,12 +42,19 @@ public class GridSpawner : MonoBehaviour
     // Load puzzle grid as before
     PuzzleLoader loader = FindFirstObjectByType<PuzzleLoader>();
     PuzzleData puzzleData = loader.LoadPuzzle();
+    
+    GameManager gm = FindFirstObjectByType<GameManager>();
+if (gm != null && puzzleData != null)
+{
+    gm.currentPuzzleId = puzzleData.id;
+    Debug.Log("[GM] Stored puzzle id: " + gm.currentPuzzleId);
+}
 
     if (puzzleData == null)
-    {
-        Debug.LogError("puzzleData is null!");
-        return;
-    }
+        {
+            Debug.LogError("puzzleData is null!");
+            return;
+        }
 
     if (puzzleData.grid == null)
     {

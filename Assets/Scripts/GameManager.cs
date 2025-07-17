@@ -4,21 +4,32 @@ using UnityEngine;
 public class GameManager : MonoBehaviour
 {
     public int scoreThreshold = 500;      // set in Inspector
+    
 
     public List<Relic> activeRelics = new List<Relic>();
     
     public string lastTriggeredNarrative;
     public CellController.NarrativeCellType lastTriggeredCellType;
-    public void CheckForLevelComplete(int currentScore)
+    public string currentPuzzleId;
+   public void CheckForLevelComplete(int currentScore)
+{
+    if (currentScore >= scoreThreshold)
     {
-        if (currentScore >= scoreThreshold)
+        Debug.Log("🎉 YOU WIN!");
+
+        ProgressManager progress = ProgressManager.Instance;
+        if (progress != null && !string.IsNullOrEmpty(currentPuzzleId))
         {
-            Debug.Log("🎉 YOU WIN!");
-            UIManager ui = FindFirstObjectByType<UIManager>();
-            if (ui != null)
-                ui.ShowWinPanel(currentScore);
+            progress.MarkPuzzleComplete(currentPuzzleId);
         }
+
+        UIManager ui = FindFirstObjectByType<UIManager>();
+        if (ui != null)
+            ui.ShowWinPanel(currentScore);
     }
+}
+
+
 
 public void TriggerGameOver()
 {

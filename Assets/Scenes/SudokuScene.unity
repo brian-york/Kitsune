@@ -1088,6 +1088,7 @@ GameObject:
   - component: {fileID: 497182342}
   - component: {fileID: 497182343}
   - component: {fileID: 497182341}
+  - component: {fileID: 497182344}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -1222,6 +1223,19 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 1a11fb60338e40440bfaa51cfda6debc, type: 2}
   lastTriggeredNarrative: 
   lastTriggeredCellType: 0
+  currentPuzzleId: 
+--- !u!114 &497182344
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 497182336}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 15c48769abda2ae409d6c53459f6bb81, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &588382365
 GameObject:
   m_ObjectHideFlags: 0
@@ -2380,9 +2394,13 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1498481261}
     m_Modifications:
+    - target: {fileID: 2384774449199156673, guid: 221bc21e3f6fd644eb5fe74516f2f0fa, type: 3}
+      propertyPath: m_text
+      value: Continue
+      objectReference: {fileID: 0}
     - target: {fileID: 6126901904629886009, guid: 221bc21e3f6fd644eb5fe74516f2f0fa, type: 3}
       propertyPath: m_Name
-      value: RestartGameButton
+      value: Continue
       objectReference: {fileID: 0}
     - target: {fileID: 6517797928889421304, guid: 221bc21e3f6fd644eb5fe74516f2f0fa, type: 3}
       propertyPath: m_Pivot.x
@@ -2465,12 +2483,16 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6685442759179851474, guid: 221bc21e3f6fd644eb5fe74516f2f0fa, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6685442759179851474, guid: 221bc21e3f6fd644eb5fe74516f2f0fa, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 695168796}
     - target: {fileID: 6685442759179851474, guid: 221bc21e3f6fd644eb5fe74516f2f0fa, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: RestartGame
+      value: ReturnToMap
       objectReference: {fileID: 0}
     - target: {fileID: 6685442759179851474, guid: 221bc21e3f6fd644eb5fe74516f2f0fa, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
