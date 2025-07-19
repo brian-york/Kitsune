@@ -27,7 +27,7 @@ public class MapManager : MonoBehaviour
                 if (button != null)
                 {
                     button.onClick.AddListener(() => OnNodeClicked(node));
-                    button.interactable = node.isUnlocked;
+                    //button.interactable = node.isUnlocked;
                 }
             }
         }
@@ -61,4 +61,5 @@ public class MapManager : MonoBehaviour
             }
         }
     }
+
 }

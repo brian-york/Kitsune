@@ -41,14 +41,7 @@ public class GridSpawner : MonoBehaviour
 
     // Load puzzle grid as before
     PuzzleLoader loader = FindFirstObjectByType<PuzzleLoader>();
-    PuzzleData puzzleData = loader.LoadPuzzle();
-    
-    GameManager gm = FindFirstObjectByType<GameManager>();
-if (gm != null && puzzleData != null)
-{
-    gm.currentPuzzleId = puzzleData.id;
-    Debug.Log("[GM] Stored puzzle id: " + gm.currentPuzzleId);
-}
+    PuzzleData puzzleData = loader.LoadPuzzle(); 
 
     if (puzzleData == null)
         {
@@ -224,48 +217,56 @@ void GenerateGrid(int[,] puzzle, string[,] cellStates, string[,] narrativeDescri
         {
             for (int col = 0; col < 9; col++)
             {
-                string state = cellStates[row, col];
+                int value = puzzle[row, col];
+string state = cellStates[row, col];
+bool isBlocked = state == "Blocked";
+bool locked = value != 0;
 
-                bool isBlocked = state == "Blocked";
+
+
 
 GameObject newCell = Instantiate(cellPrefab, transform);
 newCell.name = $"Cell_{row}_{col}";
 
+
                 var cellController = newCell.GetComponent<CellController>();
 cellController.narrativeDescription = narrativeDescriptions[row, col];
 
+                if (!string.IsNullOrEmpty(narrativeDescriptions[row, col]))
+                {
+                    cellController.narrativeDescription = narrativeDescriptions[row, col];
 
-if (!string.IsNullOrEmpty(narrativeDescriptions[row, col]))
-{
-    cellController.narrativeDescription = narrativeDescriptions[row, col];
+                    // Example: Assign type based on description keyword
 
-    // Example: Assign type based on description keyword
-    if (narrativeDescriptions[row, col].Contains("shop"))
-    {
-        cellController.narrativeCellType = CellController.NarrativeCellType.Shop;
-    }
-    else if (narrativeDescriptions[row, col].Contains("relic"))
-    {
-        cellController.narrativeCellType = CellController.NarrativeCellType.RelicReward;
-    }
-    else
-    {
-        cellController.narrativeCellType = CellController.NarrativeCellType.Event;
-    }
- cellController.narrativeCondition = new NarrativeCondition();
+                    if (narrativeDescriptions[row, col].Contains("currency"))
+                    {
+                        cellController.narrativeCellType = CellController.NarrativeCellType.Currency;
+                    }
 
- NarrativeRules rules = new NarrativeRules();
+                    if (narrativeDescriptions[row, col].Contains("shop"))
+                    {
+                        cellController.narrativeCellType = CellController.NarrativeCellType.Shop;
+                    }
+                    else if (narrativeDescriptions[row, col].Contains("relic"))
+                    {
+                        cellController.narrativeCellType = CellController.NarrativeCellType.RelicReward;
+                    }
+                    else
+                    {
+                        cellController.narrativeCellType = CellController.NarrativeCellType.Event;
+                    }
+                    cellController.narrativeCondition = new NarrativeCondition();
 
-if (cellController.narrativeCellType != CellController.NarrativeCellType.None)
-{
-    cellController.narrativeCondition = rules.GetCondition(cellController.narrativeCellType);
-    Debug.Log($"Assigned narrative condition for cell [{row},{col}]: requiresSpecificTile={cellController.narrativeCondition.requiresSpecificTile} number={cellController.narrativeCondition.requiredTileNumber} effect={cellController.narrativeCondition.requiredTileEffect}");
-}
+                    NarrativeRules rules = new NarrativeRules();
+
+                    if (cellController.narrativeCellType != CellController.NarrativeCellType.None)
+                    {
+                        cellController.narrativeCondition = rules.GetCondition(cellController.narrativeCellType);
+                        Debug.Log($"Assigned narrative condition for cell [{row},{col}]: requiresSpecificTile={cellController.narrativeCondition.requiresSpecificTile} number={cellController.narrativeCondition.requiredTileNumber} effect={cellController.narrativeCondition.requiredTileEffect}");
+                    }
                     cellController.SetNarrativeCellColor();
-}
+                }
 
-int value = puzzle[row, col];
-bool locked = value != 0;
 
 cellController.SetupCell(row, col);
 

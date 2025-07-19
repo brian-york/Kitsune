@@ -10,7 +10,6 @@ public class GameManager : MonoBehaviour
     
     public string lastTriggeredNarrative;
     public CellController.NarrativeCellType lastTriggeredCellType;
-    public string currentPuzzleId;
    public void CheckForLevelComplete(int currentScore)
 {
     if (currentScore >= scoreThreshold)
@@ -18,10 +17,11 @@ public class GameManager : MonoBehaviour
         Debug.Log("🎉 YOU WIN!");
 
         ProgressManager progress = ProgressManager.Instance;
-        if (progress != null && !string.IsNullOrEmpty(currentPuzzleId))
-        {
-            progress.MarkPuzzleComplete(currentPuzzleId);
-        }
+        if (progress != null && !string.IsNullOrEmpty(progress.currentPuzzleId))
+{
+    progress.MarkPuzzleComplete(progress.currentPuzzleId);
+}
+
 
         UIManager ui = FindFirstObjectByType<UIManager>();
         if (ui != null)

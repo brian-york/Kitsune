@@ -11,6 +11,8 @@ public static class KitsuneColors
     public static readonly Color KokeGreen = new Color(0.31f, 0.40f, 0.33f);
     public static readonly Color AonibiBlue = new Color(0.24f, 0.33f, 0.40f);
     public static readonly Color DriedInkBrown = new Color(0.25f, 0.20f, 0.15f);
+    public static Color CurrencyCell = new Color(1f, 0.84f, 0f, 0.4f); 
+
 }
 
 
@@ -20,3 +22,4 @@ public static class KitsuneColors
 //FoxRustRed	#A44E3F
 //DeepIndigoNight	#2E334B
 //DriedInkBrown	#5B4636
+//MonGold #FFD700

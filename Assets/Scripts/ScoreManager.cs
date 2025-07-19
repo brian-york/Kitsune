@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro;
 using System.Collections;
+using UnityEngine.SceneManagement;
 public class ScoreManager : MonoBehaviour
 {
     public int currentScore = 0;
@@ -77,16 +78,44 @@ public class ScoreManager : MonoBehaviour
         if (currentScore < 0) currentScore = 0;
         UpdateScoreUI();
     }
-    
+
     public void ShowPopupDelayed(int amount, string label, Vector3 worldPos, float delaySeconds)
+    {
+        StartCoroutine(ShowPopupCoroutine(amount, label, worldPos, delaySeconds));
+    }
+
+    private IEnumerator ShowPopupCoroutine(int amount, string label, Vector3 worldPos, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        ShowPopup(amount, label, worldPos);
+    }
+
+    public void ShowCurrencyPopup(int amount, Vector3 position)
 {
-    StartCoroutine(ShowPopupCoroutine(amount, label, worldPos, delaySeconds));
+    string label = "mon";
+    ShowPopup(amount, label, position);
 }
 
-private IEnumerator ShowPopupCoroutine(int amount, string label, Vector3 worldPos, float delay)
-{
-    yield return new WaitForSeconds(delay);
-    ShowPopup(amount, label, worldPos);
+    void Awake()
+    {
+        if (SceneManager.GetActiveScene().name != "SudokuScene")
+        {
+            this.enabled = false;
+        }
+    
+    if (popupScorePrefab == null)
+    {
+        popupScorePrefab = Resources.Load<GameObject>("PopupScoreText");
+        Debug.LogWarning("PopupScorePrefab was missing, attempted to load from Resources.");
+    }
+
+    if (popupCanvasLayer == null)
+    {
+        popupCanvasLayer = GameObject.Find("PopupCanvasLayer")?.transform;
+        Debug.LogWarning("PopupCanvasLayer was missing, attempted to find in scene.");
+    }
 }
 
 }
+
+

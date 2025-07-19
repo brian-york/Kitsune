@@ -1,6 +1,8 @@
 using UnityEngine;
 using TMPro;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
+
 
 public class CellController : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
@@ -21,10 +23,14 @@ public class CellController : MonoBehaviour, IPointerEnterHandler, IPointerExitH
         Shop,
         Event,
         Boss,
-        RelicReward
+        RelicReward,
+        Currency
     }
 
-public NarrativeCellType narrativeCellType = NarrativeCellType.None;
+[SerializeField] private GameObject currencyOverlay;
+
+
+    public NarrativeCellType narrativeCellType = NarrativeCellType.None;
 
     void Awake()
     {
@@ -172,30 +178,40 @@ public void SetNarrativeCellColor()
 
     Color cellColor = Color.white;
 
-    switch (narrativeCellType)
+        switch (narrativeCellType)
+        {
+            case NarrativeCellType.Shop:
+                cellColor = KitsuneColors.ShopCell;
+                break;
+            case NarrativeCellType.Event:
+                cellColor = KitsuneColors.EventCell;
+                break;
+            case NarrativeCellType.Boss:
+                cellColor = KitsuneColors.BossCell;
+                break;
+            case NarrativeCellType.RelicReward:
+                cellColor = KitsuneColors.RelicRewardCell;
+                break;
+            case NarrativeCellType.Currency:
+            cellColor = KitsuneColors.CurrencyCell;
+            break;
+    }
+
+    GetComponent<Image>().color = cellColor;
+    
+    if (currencyOverlay != null)
     {
-        case NarrativeCellType.Shop:
-            cellColor = KitsuneColors.ShopCell;
-            break;
-        case NarrativeCellType.Event:
-            cellColor = KitsuneColors.EventCell;
-            break;
-        case NarrativeCellType.Boss:
-            cellColor = KitsuneColors.BossCell;
-            break;
-        case NarrativeCellType.RelicReward:
-            cellColor = KitsuneColors.RelicRewardCell;
-            break;
+        currencyOverlay.SetActive(narrativeCellType == NarrativeCellType.Currency);
     }
 
     if (inputField != null)
-    {
-        var colors = inputField.colors;
-        colors.normalColor = cellColor;
-        inputField.colors = colors;
+        {
+            var colors = inputField.colors;
+            colors.normalColor = cellColor;
+            inputField.colors = colors;
 
-        Debug.Log($"[SetNarrativeCellColor] Assigned color {cellColor} to cell [{row},{column}] via ColorBlock.");
-    }
+            Debug.Log($"[SetNarrativeCellColor] Assigned color {cellColor} to cell [{row},{column}] via ColorBlock.");
+        }
 }
 
 
