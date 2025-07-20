@@ -28,15 +28,12 @@
     "Playable","Playable","Blocked","Playable","Playable","Playable","Blocked","Playable","Playable",
     "Playable","Playable","Playable","Blocked","Blocked","Blocked","Playable","Playable","Playable"
   ],
-  "narrativeCellDescriptions": [
-    "", "", "", "", "", "", "", "", "",
-    "", "", "", "", "", "", "", "", "",
-    "", "", "", "", "", "", "", "", "",
-    "", "", "", "", "", "", "", "", "",
-    "", "", "", "", "", "This cell triggers a secret relic shop!", "", "", "",
-    "", "", "", "", "", "", "", "", "",
-    "", "", "", "", "", "", "", "", "",
-    "", "", "", "", "", "", "", "", "",
-    "", "", "", "", "", "", "", "", ""
+  "narrativeCells": [
+    {
+      "row": 4,
+      "col": 5,
+      "narrativeCellType": "Shop",
+      "description": "This cell triggers a secret relic shop!"
+    }
   ]
 }

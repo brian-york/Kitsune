@@ -20,7 +20,7 @@
     "Playable","Playable","Playable","Playable","Playable","Blocked","Blocked","Playable","Playable",
     "Playable","Playable","Playable","Playable","Playable","Playable","Playable","Playable","Playable",
 
-    "Playable","Playable","Playable","Blocked","Blocked","Playable","Playable","Playable","Playable",
+    "Playable","Playable","Playable","Playable","Blocked","Blocked","Playable","Playable","Playable",
     "Playable","Playable","Playable","Playable","Playable","Playable","Playable","Playable","Playable",
     "Playable","Playable","Playable","Blocked","Blocked","Playable","Playable","Playable","Playable",
 
@@ -28,15 +28,12 @@
     "Playable","Playable","Playable","Playable","Playable","Playable","Playable","Playable","Playable",
     "Playable","Playable","Playable","Playable","Blocked","Blocked","Playable","Playable","Playable"
   ],
-  "narrativeCellDescriptions": [
-    "", "", "", "", "", "", "", "", "",
-    "", "", "", "", "", "", "", "", "",
-    "", "", "", "", "", "", "", "", "",
-    "", "", "", "", "", "", "", "", "",
-    "", "", "", "", "", "A mischievous spirit offers to reroll one of your relics.", "", "", "",
-    "", "", "", "", "", "", "", "", "",
-    "", "", "", "", "", "", "", "", "",
-    "", "", "", "", "", "", "", "", "",
-    "", "", "", "", "", "", "", "", ""
+  "narrativeCells": [
+    {
+      "row": 4,
+      "col": 5,
+      "narrativeCellType": "Currency",
+      "description": "Playing here gives +1 Mon"
+    }
   ]
 }

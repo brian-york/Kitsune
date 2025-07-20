@@ -17,23 +17,22 @@ public class CellDropHandler : MonoBehaviour, IDropHandler
 
     if (tile != null)
         {
-            // ✅ BLOCKED CELL CHECK
-            CellController cellController = GetComponent<CellController>();
-            if (cellController != null && cellController.isBlocked)
-            {
-                Debug.Log($"Cell [{row},{col}] is blocked. Rejecting drop.");
+    CellController cellController = GetComponent<CellController>();
+    
+    if (cellController != null && cellController.locked)
+    {
+        Debug.Log($"Cell [{row},{col}] is locked (pre-filled). Rejecting drop.");
 
-                Destroy(tile.gameObject);
+        Destroy(tile.gameObject);
 
-                // Draw a new tile to replace it
-                GridSpawner gridSpawner = FindFirstObjectByType<GridSpawner>();
-                if (gridSpawner != null)
-                {
-                    gridSpawner.RefillTileHand();
-                }
+        GridSpawner gridSpawner = FindFirstObjectByType<GridSpawner>();
+        if (gridSpawner != null)
+        {
+            gridSpawner.RefillTileHand();
+        }
 
-                return;
-            }
+        return;
+    }
 
 
             Debug.Log($"Tile dropped on cell [{row},{col}] with value {tile.tileValue}");
@@ -77,10 +76,8 @@ public class CellDropHandler : MonoBehaviour, IDropHandler
                     {
                         Debug.Log($"✅ Narrative condition met at cell [{row},{col}] for tile {tile.tileValue}!");
 
-                        // Mark narrative as triggered
                         cellController.narrativeTriggered = true;
-
-                        // Save it in the GameManager for post-win processing
+                        
                         GameManager gm = FindFirstObjectByType<GameManager>();
                         if (gm != null)
                         {
@@ -105,17 +102,31 @@ public class CellDropHandler : MonoBehaviour, IDropHandler
                     }
                 }
                 else
-                {
-                    // No specific tile required, automatically trigger
-                    cellController.narrativeTriggered = true;
+{
+    // No specific tile required, automatically trigger
+    cellController.narrativeTriggered = true;
 
-                    GameManager gm = FindFirstObjectByType<GameManager>();
-                    if (gm != null)
-                    {
-                        gm.lastTriggeredNarrative = cellController.narrativeDescription;
-                        gm.lastTriggeredCellType = cellController.narrativeCellType;
-                    }
-                }
+    GameManager gm = FindFirstObjectByType<GameManager>();
+    if (gm != null)
+    {
+        gm.lastTriggeredNarrative = cellController.narrativeDescription;
+        gm.lastTriggeredCellType = cellController.narrativeCellType;
+    }
+
+    // ✅ Handle Currency if applicable
+    if (cellController.narrativeCellType == CellController.NarrativeCellType.Currency)
+    {
+        ProgressManager.Instance?.AddCurrency(1);
+        Debug.Log("💰 Currency awarded for playing on Currency cell.");
+
+        if (scoreManager != null)
+        {
+            Vector3 popupPosition = transform.position + new Vector3(0, 50, 0);
+            scoreManager.ShowCurrencyPopup(1, popupPosition);
+        }
+    }
+}
+
             }
 
             // ✅ Update cell in puzzle grid
@@ -159,12 +170,6 @@ public class CellDropHandler : MonoBehaviour, IDropHandler
                         }
                     }
                 }
-            }
-
-            if (scoreManager != null)
-            {
-                Vector3 popupPosition = transform.position + new Vector3(0, 50, 0); // slight vertical offset
-                scoreManager.ShowCurrencyPopup(1, popupPosition);
             }
 
             ScoringManager scoringManager = FindFirstObjectByType<ScoringManager>();

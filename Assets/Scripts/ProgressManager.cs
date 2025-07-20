@@ -8,9 +8,18 @@ public class ProgressManager : MonoBehaviour
     public int playerCurrency = 0;
 
     public void AddCurrency(int amount)
+    {
+        Debug.Log("🧩 AddCurrency() was called.");
+        Debug.Log($"🧠 Active ProgressManager: {this.gameObject.name}");
+
+        playerCurrency += amount;
+        Debug.Log($"💰 Currency increased by {amount}. Total: {playerCurrency}");
+    
+    if (Instance == null)
 {
-    playerCurrency += amount;
-    Debug.Log($"💰 Currency increased by {amount}. Total: {playerCurrency}");
+    Debug.LogError("❌ ProgressManager.Instance is null!");
+    return;
+}
 }
 
 public bool SpendCurrency(int amount)

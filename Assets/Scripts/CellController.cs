@@ -16,6 +16,8 @@ public class CellController : MonoBehaviour, IPointerEnterHandler, IPointerExitH
 
     public bool isBlocked = false;
     public bool narrativeTriggered = false;
+    public bool locked = false; // Marks pre-filled cells as non-interactable but not blocked
+
     public NarrativeCondition narrativeCondition;
     public enum NarrativeCellType
     {
@@ -101,27 +103,39 @@ else
     }
 
     public void SetValue(int value, bool locked)
-    {
-        if (value > 0)
-            inputField.SetTextWithoutNotify(value.ToString());
-        else
-            inputField.text = "";
-
-        inputField.interactable = !locked;
-
-        var textComponent = inputField.transform.Find("Text Area/Text")?.GetComponent<TextMeshProUGUI>();
-        if (textComponent != null)
-        {
-            textComponent.color = KitsuneColors.DriedInkBrown;
-        }
-
-        if (narrativeCellType != NarrativeCellType.None)
 {
-    Debug.Log($"[SetValue] Re-applying narrative color for cell [{row},{column}]");
-    SetNarrativeCellColor();
-}
+    this.locked = locked;  // Track the locked state
 
+    if (value > 0)
+    {
+        inputField.SetTextWithoutNotify(value.ToString());
+
+        // Force disable interaction for pre-filled values
+        inputField.interactable = false;
+
+        // Optional: make it visually clearer it's not editable
+        inputField.image.color = new Color(0.95f, 0.92f, 0.88f); // Light paper tone
     }
+    else
+    {
+        inputField.text = "";
+        inputField.interactable = true; // Empty cells are interactable
+    }
+
+    var textComponent = inputField.transform.Find("Text Area/Text")?.GetComponent<TextMeshProUGUI>();
+    if (textComponent != null)
+    {
+        textComponent.color = KitsuneColors.DriedInkBrown;
+    }
+
+    if (narrativeCellType != NarrativeCellType.None)
+    {
+        Debug.Log($"[SetValue] Re-applying narrative color for cell [{row},{column}]");
+        SetNarrativeCellColor();
+    }
+
+    Debug.Log($"[SetValue] Cell [{row},{column}] => value: {value}, locked: {locked}, interactable: {inputField.interactable}");
+}
 
     public void SetBlocked(bool blocked)
     {
