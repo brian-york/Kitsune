@@ -143,7 +143,29 @@ public class GridSpawner : MonoBehaviour
 
                 var cellController = newCell.GetComponent<CellController>();
                 cellController.SetupCell(row, col);
-                cellController.narrativeDescription = narrativeDescriptions[row, col];
+                string description = "";
+if (narrativeCells != null)
+{
+    foreach (var entry in narrativeCells)
+    {
+        if (entry.row == row && entry.col == col)
+        {
+            description = entry.description;
+            break;
+        }
+    }
+}
+cellController.narrativeDescription = description;
+
+
+                if (!string.IsNullOrEmpty(cellController.narrativeDescription))
+{
+    Debug.Log($"[GridSpawner] NarrativeDesc at [{row},{col}] = {cellController.narrativeDescription}");
+}
+else
+{
+    Debug.LogWarning($"[GridSpawner] No narrativeDesc at [{row},{col}] — narrativeCellType might not work!");
+}
 
                 // Assign narrative type from JSON first
                 if (narrativeCellMap.TryGetValue((row, col), out string typeStr))

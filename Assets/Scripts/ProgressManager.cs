@@ -6,20 +6,18 @@ public class ProgressManager : MonoBehaviour
     public static ProgressManager Instance;
     public string currentPuzzleId;
     public int playerCurrency = 0;
+public int TotalCurrency { get; private set; }
 
     public void AddCurrency(int amount)
-    {
-        Debug.Log("🧩 AddCurrency() was called.");
-        Debug.Log($"🧠 Active ProgressManager: {this.gameObject.name}");
-
-        playerCurrency += amount;
-        Debug.Log($"💰 Currency increased by {amount}. Total: {playerCurrency}");
-    
-    if (Instance == null)
 {
-    Debug.LogError("❌ ProgressManager.Instance is null!");
-    return;
-}
+    TotalCurrency += amount;
+
+    UIManager ui = FindFirstObjectByType<UIManager>();
+    if (ui != null)
+    {
+        ui.UpdateCurrencyDisplay(TotalCurrency);
+        ui.ShowCurrencyPopup($"+{amount} Mon"); // <== This is the popup
+    }
 }
 
 public bool SpendCurrency(int amount)

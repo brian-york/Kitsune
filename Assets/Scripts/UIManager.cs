@@ -14,6 +14,7 @@ public class UIManager : MonoBehaviour
     public GameObject narrativeTooltipPanel;
     public TextMeshProUGUI narrativeTooltipText;
     public CellController currentlyHoveredCell;
+    public TextMeshProUGUI currencyText;
 
 
     public void ShowWinPanel(int score)
@@ -45,6 +46,9 @@ public void ReturnToMap()
 
     public void ShowNarrativeTooltip(string description, Vector2 position)
 {
+
+    Debug.Log($"[UIManager] Showing tooltip at {position} with text: {description}");
+
     narrativeTooltipPanel.SetActive(true);
     narrativeTooltipText.text = description;
 
@@ -52,6 +56,29 @@ public void ReturnToMap()
     narrativeTooltipPanel.transform.position = (Vector3)(position + offset);
 }
 
+[Header("Currency Popup")]
+public GameObject currencyPopupPrefab;
+public Transform popupSpawnRoot;
+
+public void ShowCurrencyPopup(string message)
+{
+    if (currencyPopupPrefab != null && popupSpawnRoot != null)
+    {
+        GameObject popup = Instantiate(currencyPopupPrefab, popupSpawnRoot);
+        var tmp = popup.GetComponentInChildren<TextMeshProUGUI>();
+        if (tmp != null)
+            tmp.text = message;
+
+        // Optional: Animate or float up
+        Destroy(popup, 1.5f); // Adjust as needed
+    }
+}
+
+    public void UpdateCurrencyDisplay(int amount)
+    {
+        if (currencyText != null)
+            currencyText.text = $"{amount} Mon";
+    }
 
 
     public void HideNarrativeTooltip()

@@ -4,7 +4,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 
-public class CellController : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+public class CellController : MonoBehaviour
 {
     private TMP_InputField inputField;
     private int row;
@@ -229,7 +229,7 @@ public void SetNarrativeCellColor()
 }
 
 
-   public void OnPointerEnter(PointerEventData eventData)
+   /*public void OnPointerEnter(PointerEventData eventData)
     {
         UIManager ui = FindFirstObjectByType<UIManager>();
 
@@ -266,5 +266,5 @@ public void SetNarrativeCellColor()
     {
         Debug.Log("[EXIT] No action taken on exit.");
     }
-}
+}*/
 }
