@@ -53,8 +53,12 @@ public class CellController : MonoBehaviour
 
     void OnCellValueChanged(string text)
     {
+
+        Debug.Log($"[CurrencyCheck] Cell [{row},{column}] Type: {narrativeCellType}, Triggered: {narrativeTriggered}");
+
         if (isBlocked)
             return;
+Debug.Log($"[CurrencyTrigger] Triggering Currency logic for cell [{row},{column}].");
 
         int value = 0;
 
@@ -81,26 +85,59 @@ public class CellController : MonoBehaviour
 
         var textComponent = inputField.transform.Find("Text Area/Text")?.GetComponent<TextMeshProUGUI>();
 
-       if (puzzleManager.IsValid(row, column))
+        if (puzzleManager.IsValid(row, column))
+        {
+            if (narrativeCellType == NarrativeCellType.None)
+            {
+                Debug.Log($"[OnCellValueChanged] Cell [{row},{column}] setting color to WHITE.");
+                inputField.image.color = Color.white;
+            }
+            else
+            {
+                Debug.Log($"[OnCellValueChanged] Cell [{row},{column}] preserving narrative color: {narrativeCellType}");
+            }
+        }
+        else
+        {
+            Debug.Log($"[OnCellValueChanged] Cell [{row},{column}] setting color to RED.");
+            inputField.image.color = Color.red;
+        }
+
+
+
+        if (narrativeCellType == NarrativeCellType.Currency && !narrativeTriggered)
 {
-    if (narrativeCellType == NarrativeCellType.None)
+    Debug.Log($"[💰 CurrencyCell] Triggered at [{row},{column}] — evaluating relics...");
+    
+    int currencyAmount = 1;
+
+    var relics = ProgressManager.Instance.collectedRelics;
+    if (relics == null || relics.Count == 0)
     {
-        Debug.Log($"[OnCellValueChanged] Cell [{row},{column}] setting color to WHITE.");
-        inputField.image.color = Color.white;
+        Debug.LogWarning("[💔 CurrencyCell] No relics found in ProgressManager.");
     }
     else
     {
-        Debug.Log($"[OnCellValueChanged] Cell [{row},{column}] preserving narrative color: {narrativeCellType}");
+        foreach (var relic in relics)
+        {
+            Debug.Log($"[🔍 Relic Evaluation] Calling {relic.name}.OnCurrencyGain()...");
+            relic.OnCurrencyGain(ref currencyAmount, this);
+        }
     }
-}
-else
-{
-    Debug.Log($"[OnCellValueChanged] Cell [{row},{column}] setting color to RED.");
-    inputField.image.color = Color.red;
+
+    Debug.Log($"[💰 Final Currency Amount] Gained = {currencyAmount}");
+    ProgressManager.Instance.AddCurrency(currencyAmount);
+
+    UIManager ui = FindFirstObjectByType<UIManager>();
+    ui?.UpdateCurrencyDisplay(ProgressManager.Instance.TotalCurrency);
+
+    narrativeTriggered = true;
 }
 
+        
 
-    }
+}
+
 
     public void SetValue(int value, bool locked)
 {

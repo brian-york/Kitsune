@@ -13,9 +13,11 @@ public class PuzzleManager : MonoBehaviour
         if (winText != null)
             winText.SetActive(false);
 
-        // ✅ Update the UI to reflect current currency
+       if (ProgressManager.Instance != null)
+    {
         UIManager ui = FindFirstObjectByType<UIManager>();
         ui?.UpdateCurrencyDisplay(ProgressManager.Instance.TotalCurrency);
+    }
     }
 
     public void UpdateCell(int row, int col, int value)
@@ -28,6 +30,13 @@ public class PuzzleManager : MonoBehaviour
             Debug.Log($"⚠️ Attempt to update BLOCKED cell [{row},{col}]. Skipping grid update.");
             return;
         }
+
+        if (value == 2)
+{
+    ProgressManager.Instance.totalTwosPlaced++;
+    Debug.Log($"🍡 totalTwosPlaced incremented to: {ProgressManager.Instance.totalTwosPlaced}");
+}
+
 
         playerGrid[row, col] = value;
 

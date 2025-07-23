@@ -10,24 +10,35 @@ public class GameManager : MonoBehaviour
     
     public string lastTriggeredNarrative;
     public CellController.NarrativeCellType lastTriggeredCellType;
-   public void CheckForLevelComplete(int currentScore)
+    public Relic testRelic;
+
+void Start()
 {
-    if (currentScore >= scoreThreshold)
+    if (!ProgressManager.Instance.collectedRelics.Contains(testRelic))
     {
-        Debug.Log("🎉 YOU WIN!");
-
-        ProgressManager progress = ProgressManager.Instance;
-        if (progress != null && !string.IsNullOrEmpty(progress.currentPuzzleId))
-{
-    progress.MarkPuzzleComplete(progress.currentPuzzleId);
-}
-
-
-        UIManager ui = FindFirstObjectByType<UIManager>();
-        if (ui != null)
-            ui.ShowWinPanel(currentScore);
+        ProgressManager.Instance.AcquireRelic(testRelic);
+        Debug.Log("✅ Test relic manually added to ProgressManager for testing.");
     }
 }
+
+    public void CheckForLevelComplete(int currentScore)
+    {
+        if (currentScore >= scoreThreshold)
+        {
+            Debug.Log("🎉 YOU WIN!");
+
+            ProgressManager progress = ProgressManager.Instance;
+            if (progress != null && !string.IsNullOrEmpty(progress.currentPuzzleId))
+            {
+                progress.MarkPuzzleComplete(progress.currentPuzzleId);
+            }
+
+
+            UIManager ui = FindFirstObjectByType<UIManager>();
+            if (ui != null)
+                ui.ShowWinPanel(currentScore);
+        }
+    }
 
 
 

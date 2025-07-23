@@ -1178,21 +1178,63 @@ MonoBehaviour:
     scoreBonus: 10
     isWild: 0
     narrativeTag: 
-    copies: 3
+    copies: 2
   - number: 8
     tileColor: {r: 0, g: 0, b: 0, a: 0}
     tileEffect: 0
     scoreBonus: 10
     isWild: 0
     narrativeTag: 
-    copies: 3
+    copies: 2
   - number: 3
     tileColor: {r: 0, g: 0, b: 0, a: 0}
     tileEffect: 0
     scoreBonus: 10
     isWild: 0
     narrativeTag: 
-    copies: 3
+    copies: 2
+  - number: 2
+    tileColor: {r: 0, g: 0, b: 0, a: 0}
+    tileEffect: 0
+    scoreBonus: 10
+    isWild: 0
+    narrativeTag: 
+    copies: 2
+  - number: 9
+    tileColor: {r: 0, g: 0, b: 0, a: 0}
+    tileEffect: 0
+    scoreBonus: 10
+    isWild: 0
+    narrativeTag: 
+    copies: 2
+  - number: 1
+    tileColor: {r: 0, g: 0, b: 0, a: 0}
+    tileEffect: 0
+    scoreBonus: 10
+    isWild: 0
+    narrativeTag: 
+    copies: 2
+  - number: 6
+    tileColor: {r: 0, g: 0, b: 0, a: 0}
+    tileEffect: 0
+    scoreBonus: 10
+    isWild: 0
+    narrativeTag: 
+    copies: 2
+  - number: 7
+    tileColor: {r: 0, g: 0, b: 0, a: 0}
+    tileEffect: 0
+    scoreBonus: 10
+    isWild: 0
+    narrativeTag: 
+    copies: 2
+  - number: 4
+    tileColor: {r: 0, g: 0, b: 0, a: 0}
+    tileEffect: 0
+    scoreBonus: 10
+    isWild: 0
+    narrativeTag: 
+    copies: 2
 --- !u!114 &497182342
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1218,11 +1260,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26c172a587869114794dbc562c241a93, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  scoreThreshold: 100
+  scoreThreshold: 3000
   activeRelics:
-  - {fileID: 11400000, guid: 1a11fb60338e40440bfaa51cfda6debc, type: 2}
+  - {fileID: 11400000, guid: 08ca268abc342454c93bf94acd88c38d, type: 2}
   lastTriggeredNarrative: 
   lastTriggeredCellType: 0
+  testRelic: {fileID: 11400000, guid: 08ca268abc342454c93bf94acd88c38d, type: 2}
 --- !u!1 &588382365
 GameObject:
   m_ObjectHideFlags: 0

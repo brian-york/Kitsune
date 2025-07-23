@@ -13,9 +13,14 @@ public enum TileEffect
     Wild
 }
 
+
+
 [System.Serializable]
 public class TileData
 {
+
+    [System.NonSerialized] public int row = -1;
+[System.NonSerialized] public int col = -1;
     public int number;
     public Color tileColor;
     public TileEffect tileEffect;

@@ -15,6 +15,7 @@ public class UIManager : MonoBehaviour
     public TextMeshProUGUI narrativeTooltipText;
     public CellController currentlyHoveredCell;
     public TextMeshProUGUI currencyText;
+    
 
 
     public void ShowWinPanel(int score)

@@ -1,233 +1,121 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-
 public class CellDropHandler : MonoBehaviour, IDropHandler
 {
     public int row;
     public int col;
 
-
     public void OnDrop(PointerEventData eventData)
-{
-    TileDragHandler tile = eventData.pointerDrag?.GetComponent<TileDragHandler>();
-     ScoreManager scoreManager = FindFirstObjectByType<ScoreManager>();
-     PuzzleManager puzzleManager = FindFirstObjectByType<PuzzleManager>();
-
-
-    if (tile != null)
-        {
-    CellController cellController = GetComponent<CellController>();
-    
-    if (cellController != null && cellController.locked)
     {
-        Debug.Log($"Cell [{row},{col}] is locked (pre-filled). Rejecting drop.");
+        TileDragHandler tile = eventData.pointerDrag?.GetComponent<TileDragHandler>();
+        ScoreManager scoreManager = FindFirstObjectByType<ScoreManager>();
+        PuzzleManager puzzleManager = FindFirstObjectByType<PuzzleManager>();
+        GameManager gm = FindFirstObjectByType<GameManager>();
 
-        Destroy(tile.gameObject);
+        if (tile == null) return;
 
-        GridSpawner gridSpawner = FindFirstObjectByType<GridSpawner>();
-        if (gridSpawner != null)
+        CellController cellController = GetComponent<CellController>();
+        if (cellController != null && cellController.locked)
         {
-            gridSpawner.RefillTileHand();
+            Debug.Log($"Cell [{row},{col}] is locked. Rejecting drop.");
+            Destroy(tile.gameObject);
+            FindFirstObjectByType<GridSpawner>()?.RefillTileHand();
+            return;
         }
 
-        return;
-    }
+        Debug.Log($"Tile dropped on cell [{row},{col}] with value {tile.tileValue}");
 
-
-            Debug.Log($"Tile dropped on cell [{row},{col}] with value {tile.tileValue}");
-
-            if (puzzleManager != null && !puzzleManager.IsValid(row, col, tile.tileValue))
-            {
-                // INVALID PLACEMENT
-                Debug.Log("❌ Invalid placement. Tile destroyed, no score given.");
-
-                Destroy(tile.gameObject);
-
-                GridSpawner gridSpawner = FindFirstObjectByType<GridSpawner>();
-                if (gridSpawner != null)
-                {
-                    gridSpawner.RefillTileHand();
-                }
-
-                return; // abort the rest of OnDrop
-            }
-
-            // ✅ Narrative cell check
-            if (cellController != null && cellController.narrativeCellType != CellController.NarrativeCellType.None)
-            {
-                if (cellController.narrativeCondition != null && cellController.narrativeCondition.requiresSpecificTile)
-                {
-                    if (tile.tileValue != cellController.narrativeCondition.requiredTileNumber)
-                    {
-                        Debug.Log($"Cell [{row},{col}] requires tile {cellController.narrativeCondition.requiredTileNumber}, but player tried {tile.tileValue}. Rejecting drop.");
-
-                        Destroy(tile.gameObject);
-
-                        GridSpawner gridSpawner = FindFirstObjectByType<GridSpawner>();
-                        if (gridSpawner != null)
-                        {
-                            gridSpawner.RefillTileHand();
-                        }
-
-                        return;
-                    }
-                    else
-                    {
-                        Debug.Log($"✅ Narrative condition met at cell [{row},{col}] for tile {tile.tileValue}!");
-
-                        cellController.narrativeTriggered = true;
-                        
-                        GameManager gm = FindFirstObjectByType<GameManager>();
-                        if (gm != null)
-                        {
-                            gm.lastTriggeredNarrative = cellController.narrativeDescription;
-                            gm.lastTriggeredCellType = cellController.narrativeCellType;
-                        }
-
-                        if (cellController.narrativeCellType == CellController.NarrativeCellType.Currency)
-                        {
-                            ProgressManager.Instance?.AddCurrency(1);
-                            Debug.Log("💰 Currency awarded for playing on Currency cell.");
-                        }
-
-                        if (cellController.narrativeCellType == CellController.NarrativeCellType.Currency && scoreManager != null)
-                        {
-                            Vector3 popupPosition = transform.position + new Vector3(0, 50, 0);
-                            scoreManager.ShowCurrencyPopup(1, popupPosition);
-                        }
-
-
-
-                    }
-                }
-                else
-{
-    // No specific tile required, automatically trigger
-    cellController.narrativeTriggered = true;
-
-    GameManager gm = FindFirstObjectByType<GameManager>();
-    if (gm != null)
-    {
-        gm.lastTriggeredNarrative = cellController.narrativeDescription;
-        gm.lastTriggeredCellType = cellController.narrativeCellType;
-    }
-
-    // ✅ Handle Currency if applicable
-    if (cellController.narrativeCellType == CellController.NarrativeCellType.Currency)
-    {
-        ProgressManager.Instance?.AddCurrency(1);
-        Debug.Log("💰 Currency awarded for playing on Currency cell.");
-
-        if (scoreManager != null)
+        if (puzzleManager != null && !puzzleManager.IsValid(row, col, tile.tileValue))
         {
-            Vector3 popupPosition = transform.position + new Vector3(0, 50, 0);
-            scoreManager.ShowCurrencyPopup(1, popupPosition);
+            Debug.Log("❌ Invalid placement. Tile destroyed, no score given.");
+            Destroy(tile.gameObject);
+            FindFirstObjectByType<GridSpawner>()?.RefillTileHand();
+            return;
         }
-    }
-}
 
-            }
 
-            // ✅ Update cell in puzzle grid
-            puzzleManager.UpdateCell(row, col, tile.tileValue);
+        if (cellController != null && cellController.narrativeCellType != CellController.NarrativeCellType.None && !cellController.narrativeTriggered)
+        {
+            bool passesCondition = true;
 
-            if (cellController != null)
+            if (cellController.narrativeCondition != null && cellController.narrativeCondition.requiresSpecificTile)
             {
-                cellController.SetValue(tile.tileValue, true);
-
-                // ✅ Check for narrative cell trigger
-                if (cellController.narrativeCellType != CellController.NarrativeCellType.None &&
-                    !cellController.narrativeTriggered)
+                passesCondition = tile.tileValue == cellController.narrativeCondition.requiredTileNumber;
+                if (!passesCondition)
                 {
-                    bool trigger = false;
-
-                    if (cellController.narrativeCondition == null ||
-                        !cellController.narrativeCondition.requiresSpecificTile)
-                    {
-                        trigger = true;
-                    }
-                    else
-                    {
-                        if (tile.tileValue == cellController.narrativeCondition.requiredTileNumber ||
-                            tile.tileEffect == cellController.narrativeCondition.requiredTileEffect)
-                        {
-                            trigger = true;
-                        }
-                    }
-
-                    if (trigger)
-                    {
-                        cellController.narrativeTriggered = true;
-
-                        Debug.Log($"🎴 Narrative cell triggered at [{row},{col}]: {cellController.narrativeDescription}");
-
-                        GameManager gm = FindFirstObjectByType<GameManager>();
-                        if (gm != null)
-                        {
-                            gm.lastTriggeredNarrative = cellController.narrativeDescription;
-                            gm.lastTriggeredCellType = cellController.narrativeCellType;
-                        }
-                    }
+                    Debug.Log($"❌ Narrative condition failed at [{row},{col}]. Required: {cellController.narrativeCondition.requiredTileNumber}, Got: {tile.tileValue}");
+                    Destroy(tile.gameObject);
+                    FindFirstObjectByType<GridSpawner>()?.RefillTileHand();
+                    return;
                 }
             }
 
-            ScoringManager scoringManager = FindFirstObjectByType<ScoringManager>();
-
-
-            if (scoringManager != null && scoreManager != null)
+            if (passesCondition)
             {
-                TileScoreBreakdown breakdown = scoringManager.CalculateTileScore(row, col, tile.tileData, puzzleManager.playerGrid);
-                Vector3 cellWorldPos = transform.position;
+                Debug.Log($"✅ Narrative triggered at [{row},{col}]: {cellController.narrativeDescription}");
 
-                // Define offsets for each popup type
-                Vector3 tileOffset = Vector3.zero;
-                Vector3 boxOffset = new Vector3(0, +50, 0);
-                Vector3 rowOffset = new Vector3(-50, 0, 0);
-                Vector3 colOffset = new Vector3(0, -50, 0);
-                Vector3 tileEffectOffset = new Vector3(+50, 0, 0);
-                Vector3 relicOffset = new Vector3(0, +100, 0);
-
-                // Use delays so popups appear in sequence
-                float delay = 0f;
-
-                if (breakdown.basePoints > 0)
-                    scoreManager.ShowPopupDelayed(breakdown.basePoints, "Tile", cellWorldPos + tileOffset, delay += 0.0f);
-                if (breakdown.boxSum > 0)
-                    scoreManager.ShowPopupDelayed(breakdown.boxSum, "Box Sum", cellWorldPos + boxOffset, delay += 0.5f);
-                if (breakdown.rowSum > 0)
-                    scoreManager.ShowPopupDelayed(breakdown.rowSum, "Row Sum", cellWorldPos + rowOffset, delay += 0.5f);
-                if (breakdown.colSum > 0)
-                    scoreManager.ShowPopupDelayed(breakdown.colSum, "Col Sum", cellWorldPos + colOffset, delay += 0.5f);
-                if (breakdown.tileEffectBonus > 0)
-                    scoreManager.ShowPopupDelayed(breakdown.tileEffectBonus, "Tile Bonus", cellWorldPos + tileEffectOffset, delay += 0.5f);
-                if (breakdown.relicBonus > 0)
-                    scoreManager.ShowPopupDelayed(breakdown.relicBonus, "Relic Bonus", cellWorldPos + relicOffset, delay += 0.5f);
-
-
-                // Finally add the total
-                scoreManager.AddScore(breakdown.totalPoints);
-
-
-
-                GameManager gm = FindFirstObjectByType<GameManager>();
+                // Store last triggered narrative
                 if (gm != null)
                 {
-                    gm.CheckForLevelComplete(scoreManager.currentScore);
+                    gm.lastTriggeredNarrative = cellController.narrativeDescription;
+                    gm.lastTriggeredCellType = cellController.narrativeCellType;
                 }
-            }
 
-            Destroy(tile.gameObject);
+                // 💰 Currency Logic with Relic Evaluation
+                if (cellController.narrativeCellType == CellController.NarrativeCellType.Currency)
+                {
+                    int currencyAmount = 1;
 
-            GridSpawner gs = FindFirstObjectByType<GridSpawner>();
-            if (gs != null)
-            {
-                gs.RefillTileHand();
+                    var relics = ProgressManager.Instance?.collectedRelics;
+                    if (relics != null && relics.Count > 0)
+                    {
+                        foreach (var relic in relics)
+                        {
+                            Debug.Log($"[🔍 Relic Evaluation] Calling {relic.name}.OnCurrencyGain()...");
+                            relic.OnCurrencyGain(ref currencyAmount, cellController);
+                        }
+                    }
+
+                    ProgressManager.Instance?.AddCurrency(currencyAmount);
+                    Debug.Log($"💰 Currency awarded for playing on Currency cell. Final amount: {currencyAmount}");
+
+                    if (scoreManager != null)
+                    {
+                        Vector3 popupPosition = transform.position + new Vector3(0, 50, 0);
+                        scoreManager.ShowCurrencyPopup(currencyAmount, popupPosition);
+                    }
+                }
+
+                cellController.narrativeTriggered = true;
+            
             }
         }
-}
 
+        // ✅ Update puzzle grid and UI
+        puzzleManager?.UpdateCell(row, col, tile.tileValue);
+        cellController?.SetValue(tile.tileValue, true);
 
+        // 🧮 Scoring
+        ScoringManager scoringManager = FindFirstObjectByType<ScoringManager>();
+        if (scoringManager != null && scoreManager != null)
+        {
+            TileScoreBreakdown breakdown = scoringManager.CalculateTileScore(row, col, tile.tileData, puzzleManager.playerGrid);
+            Vector3 cellWorldPos = transform.position;
 
+            float delay = 0f;
+            scoreManager.ShowPopupDelayed(breakdown.basePoints, "Tile", cellWorldPos + Vector3.zero, delay += 0f);
+            if (breakdown.boxSum > 0) scoreManager.ShowPopupDelayed(breakdown.boxSum, "Box Sum", cellWorldPos + new Vector3(0, 50, 0), delay += 0.5f);
+            if (breakdown.rowSum > 0) scoreManager.ShowPopupDelayed(breakdown.rowSum, "Row Sum", cellWorldPos + new Vector3(-50, 0, 0), delay += 0.5f);
+            if (breakdown.colSum > 0) scoreManager.ShowPopupDelayed(breakdown.colSum, "Col Sum", cellWorldPos + new Vector3(0, -50, 0), delay += 0.5f);
+            if (breakdown.tileEffectBonus > 0) scoreManager.ShowPopupDelayed(breakdown.tileEffectBonus, "Tile Bonus", cellWorldPos + new Vector3(50, 0, 0), delay += 0.5f);
+            if (breakdown.relicBonus > 0) scoreManager.ShowPopupDelayed(breakdown.relicBonus, "Relic Bonus", cellWorldPos + new Vector3(0, 100, 0), delay += 0.5f);
 
+            scoreManager.AddScore(breakdown.totalPoints);
+            gm?.CheckForLevelComplete(scoreManager.currentScore);
+        }
+
+        Destroy(tile.gameObject);
+        FindFirstObjectByType<GridSpawner>()?.RefillTileHand();
+    }
 }

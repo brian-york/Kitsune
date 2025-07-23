@@ -32,4 +32,6 @@ public abstract class Relic : ScriptableObject
     {
         // Default does nothing
     }
+
+    public virtual void OnCurrencyGain(ref int amount, CellController cell) { }
 }

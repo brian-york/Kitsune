@@ -7,10 +7,15 @@ public class ProgressManager : MonoBehaviour
     public string currentPuzzleId;
     public int playerCurrency = 0;
 public int TotalCurrency { get; private set; }
+public List<Relic> collectedRelics = new List<Relic>();
+    public IReadOnlyList<Relic> CollectedRelics => collectedRelics;
+public int totalTwosPlaced = 0;
+
 
     public void AddCurrency(int amount)
 {
     TotalCurrency += amount;
+     playerCurrency += amount; 
 
     UIManager ui = FindFirstObjectByType<UIManager>();
     if (ui != null)
@@ -46,6 +51,15 @@ public bool SpendCurrency(int amount)
     else
     {
         Destroy(gameObject); // Avoid duplicates
+    }
+}
+
+public void AcquireRelic(Relic relic)
+{
+    if (!collectedRelics.Contains(relic))
+    {
+        collectedRelics.Add(relic);
+        Debug.Log($"[ProgressManager] Acquired new relic: {relic.name}");
     }
 }
 

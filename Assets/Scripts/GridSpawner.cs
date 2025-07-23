@@ -175,23 +175,45 @@ else
                         cellController.narrativeCellType = parsed;
                         Debug.Log($"✅ Assigned narrative type {parsed} to [{row},{col}] from JSON.");
                     }
+
+                    if (parsed == CellController.NarrativeCellType.Currency)
+                    {
+                        Debug.Log($"💰 Confirmed: Currency cell at [{row},{col}] from JSON.");
+                    }
+
                     else
                     {
                         Debug.LogWarning($"❌ Could not parse narrativeCellType: '{typeStr}' at [{row},{col}]");
                     }
                 }
                 else if (!string.IsNullOrEmpty(narrativeDescriptions[row, col]))
-                {
-                    string desc = narrativeDescriptions[row, col].ToLower();
-                    if (desc.Contains("currency"))
-                        cellController.narrativeCellType = CellController.NarrativeCellType.Currency;
-                    else if (desc.Contains("shop"))
-                        cellController.narrativeCellType = CellController.NarrativeCellType.Shop;
-                    else if (desc.Contains("relic"))
-                        cellController.narrativeCellType = CellController.NarrativeCellType.RelicReward;
-                    else
-                        cellController.narrativeCellType = CellController.NarrativeCellType.Event;
-                }
+{
+    string desc = narrativeDescriptions[row, col].ToLower();
+
+    if (desc.Contains("currency"))
+    {
+        cellController.narrativeCellType = CellController.NarrativeCellType.Currency;
+        Debug.Log($"💰 Assigned fallback Currency type to [{row},{col}] based on narrative description: {desc}");
+    }
+    else if (desc.Contains("shop"))
+    {
+        cellController.narrativeCellType = CellController.NarrativeCellType.Shop;
+        Debug.Log($"🛒 Assigned fallback Shop type to [{row},{col}] based on narrative description: {desc}");
+    }
+    else if (desc.Contains("relic"))
+    {
+        cellController.narrativeCellType = CellController.NarrativeCellType.RelicReward;
+        Debug.Log($"✨ Assigned fallback RelicReward type to [{row},{col}] based on narrative description: {desc}");
+    }
+    else
+    {
+        cellController.narrativeCellType = CellController.NarrativeCellType.Event;
+        Debug.Log($"📜 Assigned fallback Event type to [{row},{col}] based on narrative description: {desc}");
+    }
+}
+
+
+                
 
                 if (cellController.narrativeCellType != CellController.NarrativeCellType.None)
                 {

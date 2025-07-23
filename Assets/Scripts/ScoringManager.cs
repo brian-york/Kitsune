@@ -6,6 +6,7 @@ public class ScoringManager : MonoBehaviour
 
     public TileScoreBreakdown CalculateTileScore(int row, int col, TileData tile, int[,] playerGrid)
     {
+           
         TileScoreBreakdown breakdown = new TileScoreBreakdown();
 
         breakdown.basePoints = tile.number;
@@ -21,6 +22,11 @@ public class ScoringManager : MonoBehaviour
         breakdown.tileEffectBonus = 0;
         breakdown.relicBonus = 0;
 
+tile.row = row;
+        tile.col = col;
+
+RelicContext.grid = playerGrid;
+
         if (tile.tileEffect == TileEffect.Booned)
         {
             breakdown.tileEffectBonus += tile.scoreBonus;
@@ -33,6 +39,8 @@ public class ScoringManager : MonoBehaviour
             GameManager gm = FindFirstObjectByType<GameManager>();
             if (gm != null && gm.activeRelics != null)
             {
+
+
                 foreach (var relic in gm.activeRelics)
                 {
                     if (relic is YakoCloverRelic)
@@ -48,12 +56,16 @@ public class ScoringManager : MonoBehaviour
             subtotal = Mathf.RoundToInt(subtotal * leafMultiplier);
         }
 
+
+       
         GameManager gm2 = FindFirstObjectByType<GameManager>();
 
+       
         if (gm2 != null && gm2.activeRelics != null)
         {
             foreach (var relic in gm2.activeRelics)
             {
+                
                 int newPoints = relic.ModifyScore(subtotal, tile);
 
                 if (newPoints != subtotal)
