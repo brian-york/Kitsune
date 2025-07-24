@@ -267,6 +267,7 @@ GameObject:
   - component: {fileID: 957093054728909333}
   - component: {fileID: 7506274889339851177}
   - component: {fileID: 5421142598485475889}
+  - component: {fileID: -4684997337189469735}
   m_Layer: 5
   m_Name: RelicCard
   m_TagString: Untagged
@@ -417,6 +418,24 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &-4684997337189469735
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6767290796351817001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22dea8182a4a0cd4dbbc9fc378667b70, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  highlightBorder: {fileID: 6526858977841151459}
+  relicData:
+    id: 
+    name: 
+    cost: 0
+    icon: {fileID: 0}
 --- !u!1 &7776627791714753637
 GameObject:
   m_ObjectHideFlags: 0

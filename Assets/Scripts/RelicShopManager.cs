@@ -2,6 +2,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
+using System.Collections;
+
 
 public class RelicShopManager : MonoBehaviour
 {
@@ -12,18 +14,21 @@ public class RelicShopManager : MonoBehaviour
     public Button returnButton;
     private List<RelicData> availableRelics;
 
-    void Start()
-    {
-        // Hook up button (manual routing for now)
-        returnButton.onClick.AddListener(() =>
-        {
-            UnityEngine.SceneManagement.SceneManager.LoadScene("MapScene");
-        });
+    private IEnumerator Start()
+{
+     Debug.Log("🟡 RelicShopManager.Start() called");
 
-        LoadRelics();
-        DisplayRelics();
-        UpdateCurrencyUI();
-    }
+    yield return new WaitUntil(() => ProgressManager.Instance != null);
+
+    Debug.Log("🟢 ProgressManager is ready");
+
+    LoadRelics();          // ✅ Now it's safe
+    DisplayRelics();
+    UpdateCurrencyUI();
+}
+
+
+
 
     void LoadRelics()
     {
@@ -34,26 +39,41 @@ public class RelicShopManager : MonoBehaviour
             new RelicData { id = "lucky_coin", name = "Lucky Coin", cost = 3, icon = null },
             new RelicData { id = "mirror_leaf", name = "Mirror Leaf", cost = 2, icon = null },
         };
+
+           Debug.Log($"[Shop] Loaded {availableRelics.Count} relics.");
     }
 
     void DisplayRelics()
 {
-    foreach (var relic in availableRelics)
-    {
-        GameObject relicGO = Instantiate(relicCardPrefab, relicContainer);
-        relicGO.name = relic.name;
+        foreach (var relic in availableRelics)
+        {
+            GameObject relicGO = Instantiate(relicCardPrefab, relicContainer);
+            relicGO.name = relic.name;
 
-        // Set visuals
-        relicGO.transform.Find("RelicName").GetComponent<TextMeshProUGUI>().text = relic.name;
-        relicGO.transform.Find("RelicCost").GetComponent<TextMeshProUGUI>().text = $"{relic.cost} Mon";
-        Image iconImage = relicGO.transform.Find("RelicIcon").GetComponent<Image>();
-        if (relic.icon != null)
-            iconImage.sprite = relic.icon;
+            // Set visuals
+            relicGO.transform.Find("RelicName").GetComponent<TextMeshProUGUI>().text = relic.name;
+            relicGO.transform.Find("RelicCost").GetComponent<TextMeshProUGUI>().text = $"{relic.cost} Mon";
+            Image iconImage = relicGO.transform.Find("RelicIcon").GetComponent<Image>();
+            if (relic.icon != null)
+                iconImage.sprite = relic.icon;
 
-        // Set up interaction logic
-        RelicCardInteraction interaction = relicGO.GetComponent<RelicCardInteraction>();
-        interaction.relicData = relic;
-        RegisterCard(interaction); // Track it for deselection logic
+            Transform nameT = relicGO.transform.Find("RelicName");
+            if (nameT == null) Debug.LogError($"RelicCard prefab is missing 'RelicName' object");
+
+            Transform costT = relicGO.transform.Find("RelicCost");
+            if (costT == null) Debug.LogError($"RelicCard prefab is missing 'RelicCost' object");
+
+            Transform iconT = relicGO.transform.Find("RelicIcon");
+            if (iconT == null) Debug.LogError($"RelicCard prefab is missing 'RelicIcon' object");
+
+
+            // Set up interaction logic
+            RelicCardInteraction interaction = relicGO.GetComponent<RelicCardInteraction>();
+            interaction.relicData = relic;
+            RegisterCard(interaction); // Track it for deselection logic
+        
+        Debug.Log($"[Shop] Displaying {availableRelics.Count} relics...");
+
     }
 }
 
@@ -116,6 +136,12 @@ public static RelicShopManager Instance;
 
     void UpdateCurrencyUI()
     {
+        if (ProgressManager.Instance == null)
+{
+    Debug.LogError("❌ ProgressManager.Instance is null! It's not initialized before UpdateCurrencyUI() is called.");
+    return;
+}
+
         if (currencyText != null)
             currencyText.text = $"{ProgressManager.Instance.TotalCurrency} Mon";
     }
