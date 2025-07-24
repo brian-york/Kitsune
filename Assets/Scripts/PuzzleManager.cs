@@ -1,10 +1,12 @@
 using UnityEngine;
-
+using System.Linq;
+using System;
 public class PuzzleManager : MonoBehaviour
 {
     public int[,] playerGrid = new int[9, 9];
     public GameObject winText;
     public bool[,] blockedCells;
+    public CellState[] cellStates = new CellState[81];  // Ensure it's always initialized
 
     public bool isLoading = false;
 
@@ -13,11 +15,11 @@ public class PuzzleManager : MonoBehaviour
         if (winText != null)
             winText.SetActive(false);
 
-       if (ProgressManager.Instance != null)
-    {
-        UIManager ui = FindFirstObjectByType<UIManager>();
-        ui?.UpdateCurrencyDisplay(ProgressManager.Instance.TotalCurrency);
-    }
+        if (ProgressManager.Instance != null)
+        {
+            UIManager ui = FindFirstObjectByType<UIManager>();
+            ui?.UpdateCurrencyDisplay(ProgressManager.Instance.TotalCurrency);
+        }
     }
 
     public void UpdateCell(int row, int col, int value)
@@ -32,11 +34,10 @@ public class PuzzleManager : MonoBehaviour
         }
 
         if (value == 2)
-{
-    ProgressManager.Instance.totalTwosPlaced++;
-    Debug.Log($"🍡 totalTwosPlaced incremented to: {ProgressManager.Instance.totalTwosPlaced}");
-}
-
+        {
+            ProgressManager.Instance.totalTwosPlaced++;
+            Debug.Log($"🍡 totalTwosPlaced incremented to: {ProgressManager.Instance.totalTwosPlaced}");
+        }
 
         playerGrid[row, col] = value;
 
@@ -63,18 +64,21 @@ public class PuzzleManager : MonoBehaviour
     {
         if (value == 0) return true;
 
+        // Row check
         for (int c = 0; c < 9; c++)
         {
-            if (c != col && playerGrid[row, c] == value)
+            if (c != col && playerGrid[row, c] == value && cellStates[row * 9 + c] != CellState.Blocked)
                 return false;
         }
 
+        // Column check
         for (int r = 0; r < 9; r++)
         {
-            if (r != row && playerGrid[r, col] == value)
+            if (r != row && playerGrid[r, col] == value && cellStates[r * 9 + col] != CellState.Blocked)
                 return false;
         }
 
+        // 3x3 Box check
         int boxRowStart = (row / 3) * 3;
         int boxColStart = (col / 3) * 3;
 
@@ -82,7 +86,9 @@ public class PuzzleManager : MonoBehaviour
         {
             for (int c = boxColStart; c < boxColStart + 3; c++)
             {
-                if ((r != row || c != col) && playerGrid[r, c] == value)
+                if ((r != row || c != col) &&
+                    playerGrid[r, c] == value &&
+                    cellStates[r * 9 + c] != CellState.Blocked)
                     return false;
             }
         }
@@ -115,14 +121,48 @@ public class PuzzleManager : MonoBehaviour
         return true;
     }
 
-    public void LoadPuzzle(int[,] puzzle)
+    // ✅ New unified loader to handle grid + cellStates
+    public void LoadPuzzle(PuzzleData puzzleData)
+{
+    if (puzzleData.grid == null || puzzleData.grid.Count != 81)
     {
-        for (int row = 0; row < 9; row++)
+        Debug.LogError("❌ Invalid puzzle grid.");
+        return;
+    }
+
+    // Fill playerGrid
+    for (int row = 0; row < 9; row++)
+    {
+        for (int col = 0; col < 9; col++)
         {
-            for (int col = 0; col < 9; col++)
-            {
-                playerGrid[row, col] = puzzle[row, col];
-            }
+            int index = row * 9 + col;
+            playerGrid[row, col] = puzzleData.grid[index];
         }
     }
+
+    // Populate cellStates from strings to enums
+    if (puzzleData.cellStates == null || puzzleData.cellStates.Count != 81)
+    {
+        Debug.LogWarning("⚠️ Missing or invalid cellStates. Defaulting to all Playable.");
+        cellStates = Enumerable.Repeat(CellState.Playable, 81).ToArray();
+    }
+    else
+    {
+        cellStates = puzzleData.cellStates.Select(s => Enum.Parse<CellState>(s)).ToArray();
+    }
+
+    // Populate blockedCells based on cellStates
+    blockedCells = new bool[9, 9];
+    for (int row = 0; row < 9; row++)
+    {
+        for (int col = 0; col < 9; col++)
+        {
+            int index = row * 9 + col;
+            blockedCells[row, col] = cellStates[index] == CellState.Blocked;
+        }
+    }
+
+    Debug.Log("✅ Puzzle loaded with grid, cellStates, and blockedCells.");
+}
+
 }

@@ -9,85 +9,84 @@ public class GridSpawner : MonoBehaviour
     public TilePoolManager poolManager;
 
     void Start()
+{
+    if (poolManager == null)
     {
+        poolManager = FindFirstObjectByType<TilePoolManager>();
         if (poolManager == null)
         {
-            poolManager = FindFirstObjectByType<TilePoolManager>();
-            if (poolManager == null)
-            {
-                Debug.LogError("TilePoolManager not found in scene!");
-                return;
-            }
-        }
-
-        poolManager.InitializePool();
-        poolManager.ShufflePool();
-
-        for (int i = 0; i < 3; i++)
-        {
-            TileData drawnTile = poolManager.DrawTile();
-            if (drawnTile != null)
-                CreateTile(drawnTile);
-            else
-            {
-                Debug.Log("No more tiles left in the pool!");
-                break;
-            }
-        }
-
-        PuzzleLoader loader = FindFirstObjectByType<PuzzleLoader>();
-        PuzzleData puzzleData = loader.LoadPuzzle();
-
-        if (puzzleData == null || puzzleData.grid == null)
-        {
-            Debug.LogError("PuzzleData or its grid is null!");
+            Debug.LogError("TilePoolManager not found in scene!");
             return;
         }
+    }
 
-        Debug.Log("Grid loaded with " + puzzleData.grid.Count + " cells.");
+    poolManager.InitializePool();
+    poolManager.ShufflePool();
 
-        string[,] narrativeDescriptions = new string[9, 9];
-        for (int row = 0; row < 9; row++)
-            for (int col = 0; col < 9; col++)
-            {
-                int index = row * 9 + col;
-                narrativeDescriptions[row, col] = (puzzleData.narrativeCellDescriptions != null && puzzleData.narrativeCellDescriptions.Count > index)
-                    ? puzzleData.narrativeCellDescriptions[index]
-                    : "";
-            }
-
-        int[,] puzzleGrid = new int[9, 9];
-        string[,] cellStates = new string[9, 9];
-        for (int row = 0; row < 9; row++)
-            for (int col = 0; col < 9; col++)
-            {
-                int index = row * 9 + col;
-                puzzleGrid[row, col] = puzzleData.grid[index];
-                cellStates[row, col] = (puzzleData.cellStates != null && puzzleData.cellStates.Count > index)
-                    ? puzzleData.cellStates[index]
-                    : "Playable";
-            }
-
-        bool[,] blockedCells = new bool[9, 9];
-        for (int row = 0; row < 9; row++)
-            for (int col = 0; col < 9; col++)
-                blockedCells[row, col] = cellStates[row, col] == "Blocked";
-
-        PuzzleManager puzzleManager = FindFirstObjectByType<PuzzleManager>();
-        if (puzzleManager != null)
-        {
-            puzzleManager.isLoading = true;
-            puzzleManager.LoadPuzzle(puzzleGrid);
-            puzzleManager.blockedCells = blockedCells;
-            puzzleManager.isLoading = false;
-        }
+    for (int i = 0; i < 3; i++)
+    {
+        TileData drawnTile = poolManager.DrawTile();
+        if (drawnTile != null)
+            CreateTile(drawnTile);
         else
         {
-            Debug.LogError("PuzzleManager not found!");
+            Debug.Log("No more tiles left in the pool!");
+            break;
+        }
+    }
+
+    PuzzleLoader loader = FindFirstObjectByType<PuzzleLoader>();
+    PuzzleData puzzleData = loader.LoadPuzzle();
+
+    if (puzzleData == null || puzzleData.grid == null)
+    {
+        Debug.LogError("PuzzleData or its grid is null!");
+        return;
+    }
+
+    Debug.Log("Grid loaded with " + puzzleData.grid.Count + " cells.");
+
+    // Convert narrative descriptions into a 2D array
+    string[,] narrativeDescriptions = new string[9, 9];
+    for (int row = 0; row < 9; row++)
+        for (int col = 0; col < 9; col++)
+        {
+            int index = row * 9 + col;
+            narrativeDescriptions[row, col] = (puzzleData.narrativeCellDescriptions != null && puzzleData.narrativeCellDescriptions.Count > index)
+                ? puzzleData.narrativeCellDescriptions[index]
+                : "";
         }
 
-        GenerateGrid(puzzleGrid, cellStates, narrativeDescriptions, puzzleData.narrativeCells);
+    // 🧩 Load puzzle data into PuzzleManager
+    PuzzleManager puzzleManager = FindFirstObjectByType<PuzzleManager>();
+    if (puzzleManager != null)
+    {
+        puzzleManager.isLoading = true;
+        puzzleManager.LoadPuzzle(puzzleData);
+        puzzleManager.isLoading = false;
     }
+    else
+    {
+        Debug.LogError("PuzzleManager not found!");
+    }
+
+    // 🧱 Generate UI grid from data
+    int[,] puzzleGrid = new int[9, 9];
+    string[,] cellStateGrid = new string[9, 9];
+    for (int row = 0; row < 9; row++)
+    {
+        for (int col = 0; col < 9; col++)
+        {
+            int index = row * 9 + col;
+            puzzleGrid[row, col] = puzzleData.grid[index];
+            cellStateGrid[row, col] = (puzzleData.cellStates != null && puzzleData.cellStates.Count > index)
+                ? puzzleData.cellStates[index]
+                : "Playable";
+        }
+    }
+
+    GenerateGrid(puzzleGrid, cellStateGrid, narrativeDescriptions, puzzleData.narrativeCells);
+}
 
     public void CreateTile(TileData tileData)
     {

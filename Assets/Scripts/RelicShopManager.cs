@@ -10,7 +10,6 @@ public class RelicShopManager : MonoBehaviour
     public GameObject relicCardPrefab; // RelicCard.prefab with icon/name/cost/buy button
     public TextMeshProUGUI currencyText;
     public Button returnButton;
-
     private List<RelicData> availableRelics;
 
     void Start()
@@ -38,22 +37,26 @@ public class RelicShopManager : MonoBehaviour
     }
 
     void DisplayRelics()
+{
+    foreach (var relic in availableRelics)
     {
-        foreach (var relic in availableRelics)
-        {
-            GameObject relicGO = Instantiate(relicCardPrefab, relicContainer);
-            relicGO.name = relic.name;
+        GameObject relicGO = Instantiate(relicCardPrefab, relicContainer);
+        relicGO.name = relic.name;
 
-            relicGO.transform.Find("RelicName").GetComponent<TextMeshProUGUI>().text = relic.name;
-            relicGO.transform.Find("RelicCost").GetComponent<TextMeshProUGUI>().text = $"{relic.cost} Mon";
+        // Set visuals
+        relicGO.transform.Find("RelicName").GetComponent<TextMeshProUGUI>().text = relic.name;
+        relicGO.transform.Find("RelicCost").GetComponent<TextMeshProUGUI>().text = $"{relic.cost} Mon";
+        Image iconImage = relicGO.transform.Find("RelicIcon").GetComponent<Image>();
+        if (relic.icon != null)
+            iconImage.sprite = relic.icon;
 
-            if (relic.icon != null)
-                relicGO.transform.Find("RelicIcon").GetComponent<Image>().sprite = relic.icon;
-
-            Button buyButton = relicGO.transform.Find("BuyButton").GetComponent<Button>();
-            buyButton.onClick.AddListener(() => TryBuyRelic(relic, relicGO));
-        }
+        // Set up interaction logic
+        RelicCardInteraction interaction = relicGO.GetComponent<RelicCardInteraction>();
+        interaction.relicData = relic;
+        RegisterCard(interaction); // Track it for deselection logic
     }
+}
+
 
     Relic GetRelicById(string id)
 {
@@ -67,27 +70,49 @@ public class RelicShopManager : MonoBehaviour
     Debug.LogWarning($"[Shop] Relic not found for id: {id}");
     return null;
 }
+public static RelicShopManager Instance;
 
+    private List<RelicCardInteraction> allCards = new List<RelicCardInteraction>();
 
-    void TryBuyRelic(RelicData relic, GameObject relicGO)
+    private void Awake()
     {
-        if (ProgressManager.Instance.TotalCurrency >= relic.cost)
-        {
-           ProgressManager.Instance.SpendCurrency(relic.cost); 
-            Relic relicAsset = GetRelicById(relic.id);
-if (relicAsset != null)
-    ProgressManager.Instance.AcquireRelic(relicAsset);
+        Instance = this;
+    }
 
-            Destroy(relicGO); // Remove from UI
-            UpdateCurrencyUI();
-            Debug.Log($"[Shop] Bought relic: {relic.name}");
-        }
-        else
+    public void RegisterCard(RelicCardInteraction card)
+    {
+        allCards.Add(card);
+    }
+
+    public void DeselectAllCardsExcept(RelicCardInteraction selectedCard)
+    {
+        foreach (var card in allCards)
         {
-            Debug.Log($"[Shop] Not enough Mon to buy {relic.name}");
+            if (card != selectedCard)
+                card.DeselectCard();
         }
     }
 
+    public bool TryBuyRelic(RelicData relic)
+{
+    if (ProgressManager.Instance.TotalCurrency >= relic.cost)
+    {
+        ProgressManager.Instance.SpendCurrency(relic.cost);
+
+        Relic relicAsset = GetRelicById(relic.id);
+        if (relicAsset != null)
+            ProgressManager.Instance.AcquireRelic(relicAsset);
+
+        UpdateCurrencyUI();
+        Debug.Log($"[Shop] Bought relic: {relic.name}");
+        return true;
+    }
+    else
+    {
+        Debug.Log($"[Shop] Not enough Mon to buy {relic.name}");
+        return false;
+    }
+}
 
     void UpdateCurrencyUI()
     {

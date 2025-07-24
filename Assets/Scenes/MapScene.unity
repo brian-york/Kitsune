@@ -882,7 +882,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf089f98903d9c14ba3e6e81d7fc72bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  puzzleId: puzzle007
+  puzzleId: puzzle008
 --- !u!1 &1926539718
 GameObject:
   m_ObjectHideFlags: 0
@@ -915,7 +915,8 @@ MonoBehaviour:
   currentPuzzleId: 
   playerCurrency: 0
   collectedRelics:
-  - {fileID: 11400000, guid: 08ca268abc342454c93bf94acd88c38d, type: 2}
+  - {fileID: 11400000, guid: 3c9eba33c56a2c94c83cd224d47c5ba7, type: 2}
+  totalTwosPlaced: 0
 --- !u!4 &1926539720
 Transform:
   m_ObjectHideFlags: 0

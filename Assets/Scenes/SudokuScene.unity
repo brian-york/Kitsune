@@ -1143,6 +1143,9 @@ MonoBehaviour:
   - Puzzles/puzzle003
   - Puzzles/puzzle004
   - Puzzles/puzzle005
+  - Puzzles/puzzle006
+  - Puzzles/puzzle007
+  - Puzzles/puzzle008
 --- !u!114 &497182340
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1199,7 +1202,7 @@ MonoBehaviour:
     scoreBonus: 10
     isWild: 0
     narrativeTag: 
-    copies: 2
+    copies: 4
   - number: 9
     tileColor: {r: 0, g: 0, b: 0, a: 0}
     tileEffect: 0
@@ -1262,7 +1265,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   scoreThreshold: 3000
   activeRelics:
-  - {fileID: 11400000, guid: 08ca268abc342454c93bf94acd88c38d, type: 2}
+  - {fileID: 11400000, guid: 3c9eba33c56a2c94c83cd224d47c5ba7, type: 2}
   lastTriggeredNarrative: 
   lastTriggeredCellType: 0
   testRelic: {fileID: 11400000, guid: 08ca268abc342454c93bf94acd88c38d, type: 2}
