@@ -6,7 +6,8 @@ public class ProgressManager : MonoBehaviour
     public static ProgressManager Instance;
     public string currentPuzzleId;
     public int playerCurrency = 0;
-public int TotalCurrency { get; private set; }
+public int TotalCurrency => playerCurrency;
+
 public List<Relic> collectedRelics = new List<Relic>();
     public IReadOnlyList<Relic> CollectedRelics => collectedRelics;
 public int totalTwosPlaced = 0;
@@ -14,16 +15,16 @@ public int totalTwosPlaced = 0;
 
     public void AddCurrency(int amount)
 {
-    TotalCurrency += amount;
-     playerCurrency += amount; 
+    playerCurrency += amount;
 
     UIManager ui = FindFirstObjectByType<UIManager>();
     if (ui != null)
     {
-        ui.UpdateCurrencyDisplay(TotalCurrency);
-        ui.ShowCurrencyPopup($"+{amount} Mon"); // <== This is the popup
+        ui.UpdateCurrencyDisplay(TotalCurrency); // Will return playerCurrency
+        ui.ShowCurrencyPopup($"+{amount} Mon");
     }
 }
+
 
 public bool SpendCurrency(int amount)
 {

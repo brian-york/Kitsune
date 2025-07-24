@@ -28,20 +28,36 @@ public class RelicShopManager : MonoBehaviour
 }
 
 
-
+public void ReturnToMapScene()
+{
+    Debug.Log("🧭 Returning to MapScene...");
+    UnityEngine.SceneManagement.SceneManager.LoadScene("MapScene");
+}
 
     void LoadRelics()
     {
         // Temporary stub list
         availableRelics = new List<RelicData>()
-        {
-            new RelicData { id = "bamboo_shute", name = "Bamboo Shute", cost = 2, icon = null },
-            new RelicData { id = "lucky_coin", name = "Lucky Coin", cost = 3, icon = null },
-            new RelicData { id = "mirror_leaf", name = "Mirror Leaf", cost = 2, icon = null },
-        };
+{
+new RelicData { id = "adzuki_beans", name = "Adzuki Beans", cost = 2, icon = LoadIcon("adzuki_beans") },
+    new RelicData { id = "bamboo_shute", name = "Bamboo Shute", cost = 3, icon = LoadIcon("bamboo_shute") },
+    new RelicData { id = "oni_mask", name = "Oni Mask", cost = 4, icon = LoadIcon("oni_mask") },
+    new RelicData { id = "lost_onamori", name = "Lost Onamori", cost = 2, icon = LoadIcon("lost_onamori") },
+    new RelicData { id = "yakos_clover", name = "Yako's Clover", cost = 3, icon = LoadIcon("yakos_clover") }
+};
 
            Debug.Log($"[Shop] Loaded {availableRelics.Count} relics.");
     }
+
+    private Sprite LoadIcon(string iconName)
+{
+    Sprite icon = Resources.Load<Sprite>($"RelicIcons/{iconName}");
+    if (icon == null)
+    {
+        Debug.LogWarning($"[Shop] Icon not found for: {iconName}");
+    }
+    return icon;
+}
 
     void DisplayRelics()
 {
@@ -77,7 +93,6 @@ public class RelicShopManager : MonoBehaviour
     }
 }
 
-
     Relic GetRelicById(string id)
 {
     Relic[] allRelics = Resources.LoadAll<Relic>("Relics");
@@ -105,34 +120,44 @@ public static RelicShopManager Instance;
     }
 
     public void DeselectAllCardsExcept(RelicCardInteraction selectedCard)
+{
+    // Create a temporary list to hold valid cards
+    List<RelicCardInteraction> stillValid = new List<RelicCardInteraction>();
+
+    foreach (var card in allCards)
     {
-        foreach (var card in allCards)
-        {
-            if (card != selectedCard)
-                card.DeselectCard();
-        }
+        if (card == null)
+            continue; // 🛑 Skip destroyed or null references
+
+        if (card != selectedCard)
+            card.DeselectCard();
+
+        stillValid.Add(card); // ✅ Keep only active cards
     }
+
+    allCards = stillValid; // 🔄 Replace with clean list
+}
 
     public bool TryBuyRelic(RelicData relic)
-{
-    if (ProgressManager.Instance.TotalCurrency >= relic.cost)
     {
-        ProgressManager.Instance.SpendCurrency(relic.cost);
+        if (ProgressManager.Instance.TotalCurrency >= relic.cost)
+        {
+            ProgressManager.Instance.SpendCurrency(relic.cost);
 
-        Relic relicAsset = GetRelicById(relic.id);
-        if (relicAsset != null)
-            ProgressManager.Instance.AcquireRelic(relicAsset);
+            Relic relicAsset = GetRelicById(relic.id);
+            if (relicAsset != null)
+                ProgressManager.Instance.AcquireRelic(relicAsset);
 
-        UpdateCurrencyUI();
-        Debug.Log($"[Shop] Bought relic: {relic.name}");
-        return true;
+            UpdateCurrencyUI();
+            Debug.Log($"[Shop] Bought relic: {relic.name}");
+            return true;
+        }
+        else
+        {
+            Debug.Log($"[Shop] Not enough Mon to buy {relic.name}");
+            return false;
+        }
     }
-    else
-    {
-        Debug.Log($"[Shop] Not enough Mon to buy {relic.name}");
-        return false;
-    }
-}
 
     void UpdateCurrencyUI()
     {

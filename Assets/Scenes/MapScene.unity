@@ -1227,9 +1227,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   currentPuzzleId: 
-  playerCurrency: 0
-  collectedRelics:
-  - {fileID: 11400000, guid: 3c9eba33c56a2c94c83cd224d47c5ba7, type: 2}
+  playerCurrency: 10
+  collectedRelics: []
   totalTwosPlaced: 0
 --- !u!4 &1926539720
 Transform:
