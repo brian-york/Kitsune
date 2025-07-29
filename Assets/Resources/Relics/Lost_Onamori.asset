@@ -12,5 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e7d333e0eb135e349af0887d02eef8d3, type: 3}
   m_Name: Lost_Onamori
   m_EditorClassIdentifier: 
-  relicName: 
-  description: 
+  relicName: Lost Onamori
+  description: Mon tiles grant +1 mon when triggered
+  icon: {fileID: -5359188523399114452, guid: 4ea96d0672794d7489feb591931b1b13, type: 3}

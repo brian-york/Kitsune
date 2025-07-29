@@ -52,6 +52,12 @@
     "col": 5,
     "narrativeCellType": "Currency",
     "description": "Playing here gives +1 Mon"
+  },
+  {
+    "row": 7,
+    "col": 4,
+    "narrativeCellType": "Shop",
+    "description": "Unlock Relic Shop after this level"
   }
 ]
 

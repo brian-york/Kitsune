@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d873b8a2b9425ab44adf81bc854592a3, type: 3}
   m_Name: Adzuki_Beans
   m_EditorClassIdentifier: 
-  relicName: 
-  description: 
+  relicName: Adzuki Beans
+  description: Boon tiles give +5 points
+  icon: {fileID: -1890837632684989995, guid: f4d5baffe5164a041a2b1d5a4e39f25d, type: 3}
   bonusPoints: 5

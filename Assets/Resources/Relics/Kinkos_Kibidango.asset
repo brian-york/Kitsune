@@ -12,5 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8bfa9f3d3491f88469b3e37f011a1388, type: 3}
   m_Name: Kinkos_Kibidango
   m_EditorClassIdentifier: 
-  relicName: 
-  description: 
+  relicName: Kinko's Kibidango
+  description: Your 2's have a +0.25 multiplier for every 2 you've played this game
+  icon: {fileID: -8004832598780827223, guid: b42ea0a3f5acb93429417d617fc3d70a, type: 3}

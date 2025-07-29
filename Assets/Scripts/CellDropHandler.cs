@@ -62,6 +62,14 @@ public class CellDropHandler : MonoBehaviour, IDropHandler
                     gm.lastTriggeredCellType = cellController.narrativeCellType;
                 }
 
+                ProgressManager progress = ProgressManager.Instance;
+                if (progress != null)
+                {
+                    progress.SetNarrativeTrigger(cellController.narrativeCellType);
+                    Debug.Log($"🧠 ProgressManager updated: Triggered narrative type = {cellController.narrativeCellType}");
+                }
+
+
                 // 💰 Currency Logic with Relic Evaluation
                 if (cellController.narrativeCellType == CellController.NarrativeCellType.Currency)
                 {
@@ -88,6 +96,7 @@ public class CellDropHandler : MonoBehaviour, IDropHandler
                 }
 
                 cellController.narrativeTriggered = true;
+                
             
             }
         }

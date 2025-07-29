@@ -12,5 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d63f20b831c647458043eac050da785, type: 3}
   m_Name: Bamboo_Shute
   m_EditorClassIdentifier: 
-  relicName: 
-  description: 
+  relicName: Bamboo Shute
+  description: +100 points for finishing a column
+  icon: {fileID: -6709126378164523766, guid: 2e4d7497b0b9c1c438f4bd8329636a7c, type: 3}

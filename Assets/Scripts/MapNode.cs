@@ -3,21 +3,35 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using System.Collections;
 
+public enum MapNodeType
+{
+    Puzzle,
+    Shop,
+    Event,
+    Boss
+}
+
 public class MapNode : MonoBehaviour
 {
-    public string puzzleId;  // Set in Inspector
+    public string puzzleId; // Used for Puzzle-type nodes
+    public MapNodeType nodeType = MapNodeType.Puzzle;
     private Button button;
+    public Image iconImage; // Drag in from the inspector
+public Sprite puzzleIcon;
+public Sprite shopIcon;
+public Sprite eventIcon;
+    public Sprite bossIcon;
+
 
     void Start()
     {
         button = GetComponent<Button>();
-
         RefreshLockout();
 
-        // ✅ Only assign listener if still interactable after lockout check
-        if (button.interactable)
+        if (button != null && button.interactable)
         {
             button.onClick.AddListener(OnNodeClicked);
+
         }
     }
 
@@ -26,34 +40,66 @@ public class MapNode : MonoBehaviour
         RefreshLockout();
     }
 
+public void UpdateVisuals()
+{
+    switch (nodeType)
+    {
+        case MapNodeType.Puzzle:
+            iconImage.sprite = puzzleIcon;
+            break;
+        case MapNodeType.Shop:
+            iconImage.sprite = shopIcon;
+            break;
+        case MapNodeType.Event:
+            iconImage.sprite = eventIcon;
+            break;
+        case MapNodeType.Boss:
+            iconImage.sprite = bossIcon;
+            break;
+    }
+}
+
     private void RefreshLockout()
     {
-        if (ProgressManager.Instance != null && ProgressManager.Instance.IsPuzzleComplete(puzzleId))
+        if (nodeType == MapNodeType.Puzzle &&
+            ProgressManager.Instance != null &&
+            ProgressManager.Instance.IsPuzzleComplete(puzzleId))
         {
             Debug.Log($"[MapNode] Locking puzzle {puzzleId}");
 
             if (button == null)
                 button = GetComponent<Button>();
 
-            button.interactable = false; // 💡 This now disables the button BEFORE listener is added
+            button.interactable = false;
             GetComponent<Image>().color = Color.gray;
         }
     }
 
     private void OnNodeClicked()
     {
-        StartCoroutine(DelayedSceneLoad());
-    }
-
-    private IEnumerator DelayedSceneLoad()
-    {
-        if (ProgressManager.Instance != null)
+        if (ProgressManager.Instance != null && nodeType == MapNodeType.Puzzle)
         {
             ProgressManager.Instance.currentPuzzleId = puzzleId;
-            Debug.Log("[MapNode] Selected puzzle: " + puzzleId);
         }
 
-        yield return null;
-        SceneManager.LoadScene("SudokuScene");
+        switch (nodeType)
+        {
+            case MapNodeType.Shop:
+                SceneManager.LoadScene("RelicShopScene");
+                break;
+
+            case MapNodeType.Event:
+                SceneManager.LoadScene("EventScene"); // placeholder
+                break;
+
+            case MapNodeType.Boss:
+                SceneManager.LoadScene("BossScene"); // placeholder
+                break;
+
+            case MapNodeType.Puzzle:
+            default:
+                SceneManager.LoadScene("SudokuScene");
+                break;
+        }
     }
 }

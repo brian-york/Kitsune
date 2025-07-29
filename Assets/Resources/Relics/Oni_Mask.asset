@@ -12,5 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c1326548307962745a0e666bca6b513a, type: 3}
   m_Name: Oni_Mask
   m_EditorClassIdentifier: 
-  relicName: 
-  description: 
+  relicName: Oni Mask
+  description: +10 points for each empty cell in a 3x3 grid
+  icon: {fileID: 7137004084620872416, guid: 427d609d29933bf4fac80440e920f3a0, type: 3}

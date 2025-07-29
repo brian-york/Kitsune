@@ -12,5 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c9db70a8d4e62e4ca2344a4e0edbc3f, type: 3}
   m_Name: Yakos_Clover
   m_EditorClassIdentifier: 
-  relicName: 
-  description: 
+  relicName: Yako's Clover
+  description: Leaf tiles now triple the tile value
+  icon: {fileID: -1571542647548061710, guid: 9abc8fb9e2e133145a4598bf8988bc0a, type: 3}

@@ -8,6 +8,7 @@ public abstract class Relic : ScriptableObject
     public string relicName;
     [TextArea]
     public string description;
+    public Sprite icon;
 
     /// <summary>
     /// Optional override. Modifies score when a tile is placed.

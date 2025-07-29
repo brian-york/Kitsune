@@ -8,17 +8,19 @@ public class TooltipTrigger : MonoBehaviour, IPointerEnterHandler, IPointerExitH
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        TooltipController tooltip = Object.FindFirstObjectByType<TooltipController>();
-
-
-        if (tooltip != null)
-            tooltip.ShowTooltip(description);
+        var uiManager = FindFirstObjectByType<UIManager>();
+        if (uiManager != null)
+        {
+            uiManager.ShowNarrativeTooltip(description, Input.mousePosition);
+        }
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        TooltipController tooltip = Object.FindFirstObjectByType<TooltipController>();
-        if (tooltip != null)
-            tooltip.HideTooltip();
+        var uiManager = FindFirstObjectByType<UIManager>();
+        if (uiManager != null)
+        {
+            uiManager.HideNarrativeTooltip();
+        }
     }
 }

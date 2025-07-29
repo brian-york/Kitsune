@@ -10,8 +10,11 @@ public int TotalCurrency => playerCurrency;
 
 public List<Relic> collectedRelics = new List<Relic>();
     public IReadOnlyList<Relic> CollectedRelics => collectedRelics;
-public int totalTwosPlaced = 0;
+    public int totalTwosPlaced = 0;
 
+[Header("Narrative Routing")]
+public bool narrativeTriggeredThisPuzzle = false;
+public CellController.NarrativeCellType narrativeTypeTriggered = CellController.NarrativeCellType.None;
 
     public void AddCurrency(int amount)
 {
@@ -25,18 +28,24 @@ public int totalTwosPlaced = 0;
     }
 }
 
-
-public bool SpendCurrency(int amount)
+public void SetNarrativeTrigger(CellController.NarrativeCellType type)
 {
-    if (playerCurrency >= amount)
-    {
-        playerCurrency -= amount;
-        Debug.Log($"🧾 Spent {amount} currency. Remaining: {playerCurrency}");
-        return true;
-    }
-    Debug.Log("❌ Not enough currency.");
-    return false;
+    narrativeTriggeredThisPuzzle = true;
+    narrativeTypeTriggered = type;
 }
+
+
+    public bool SpendCurrency(int amount)
+    {
+        if (playerCurrency >= amount)
+        {
+            playerCurrency -= amount;
+            Debug.Log($"🧾 Spent {amount} currency. Remaining: {playerCurrency}");
+            return true;
+        }
+        Debug.Log("❌ Not enough currency.");
+        return false;
+    }
 
 
     public HashSet<string> completedPuzzles = new HashSet<string>();
