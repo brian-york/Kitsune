@@ -826,34 +826,52 @@ MonoBehaviour:
   nodes:
   - nodeName: Puzzle1
     sceneToLoad: SudokuScene
-    isUnlocked: 0
+    isUnlocked: 1
     isCompleted: 0
     spawnPoint: {fileID: 1123418351}
     nodeType: 0
-    connectedNodeNames: []
+    connectedNodeNames:
+    - NodeSlot2
+    prerequisiteNodeName: 
+    puzzleId: 
+    difficulty: Medium
   - nodeName: Puzzle2
     sceneToLoad: SudokuScene
     isUnlocked: 1
     isCompleted: 0
     spawnPoint: {fileID: 781448258}
     nodeType: 0
-    connectedNodeNames: []
+    connectedNodeNames:
+    - NodeSlot1
+    - NodeSlot3
+    prerequisiteNodeName: NodeSlot1
+    puzzleId: 
+    difficulty: Medium
   - nodeName: Puzzle3
     sceneToLoad: SudokuScene
     isUnlocked: 1
     isCompleted: 0
     spawnPoint: {fileID: 2039502624}
     nodeType: 0
-    connectedNodeNames: []
+    connectedNodeNames:
+    - NodeSlot2
+    - NodeSlot4
+    prerequisiteNodeName: NodeSlot2
+    puzzleId: 
+    difficulty: Medium
   - nodeName: Puzzle4
     sceneToLoad: SudokuScene
     isUnlocked: 1
     isCompleted: 0
     spawnPoint: {fileID: 135352638}
     nodeType: 0
-    connectedNodeNames: []
+    connectedNodeNames:
+    - NodeSlot3
+    prerequisiteNodeName: NodeSlot3
+    puzzleId: 
+    difficulty: Medium
   mapPanel: {fileID: 1716376639}
-  defaultNodeButtonPrefab: {fileID: 2978105574903489592, guid: 232e4ebbdf071e04a81bb4b132f5b25f, type: 3}
+  mapNodeButtonPrefab: {fileID: 2978105574903489592, guid: 232e4ebbdf071e04a81bb4b132f5b25f, type: 3}
   linePrefab: {fileID: 1212784796992422302, guid: 6f40442e2aa84d5438683f369b55ecf1, type: 3}
   lineParent: {fileID: 5492755380301481678}
 --- !u!1 &1876638961
