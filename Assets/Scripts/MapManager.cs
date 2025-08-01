@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityEngine.UI.Extensions;
-
+using System.Collections;
 public class MapManager : MonoBehaviour
 {
     [System.Serializable]
@@ -19,7 +19,7 @@ public class MapManager : MonoBehaviour
         public string prerequisiteNodeName;
         public string puzzleId;
         public string difficulty = "Medium";
-        
+
 
     }
 
@@ -52,19 +52,19 @@ public class MapManager : MonoBehaviour
         {
             // Assign a puzzle ID if not already set
             if (node.nodeType == MapNodeType.Puzzle)
-{
-    if (ProgressManager.Instance.HasPuzzleAssignment(node.nodeName))
-    {
-        node.puzzleId = ProgressManager.Instance.GetPuzzleForNode(node.nodeName);
-        Debug.Log($"📂 Loaded saved puzzle '{node.puzzleId}' for node '{node.nodeName}'");
-    }
-    else
-    {
-        node.puzzleId = PuzzlePool.GetRandomPuzzle(node.difficulty);
-        ProgressManager.Instance.SetPuzzleForNode(node.nodeName, node.puzzleId);
-        Debug.Log($"🎲 Assigned new puzzle '{node.puzzleId}' to node '{node.nodeName}'");
-    }
-}
+            {
+                if (ProgressManager.Instance.HasPuzzleAssignment(node.nodeName))
+                {
+                    node.puzzleId = ProgressManager.Instance.GetPuzzleForNode(node.nodeName);
+                    Debug.Log($"📂 Loaded saved puzzle '{node.puzzleId}' for node '{node.nodeName}'");
+                }
+                else
+                {
+                    node.puzzleId = PuzzlePool.GetRandomPuzzle(node.difficulty);
+                    ProgressManager.Instance.SetPuzzleForNode(node.nodeName, node.puzzleId);
+                    Debug.Log($"🎲 Assigned new puzzle '{node.puzzleId}' to node '{node.nodeName}'");
+                }
+            }
 
             GameObject newNodeGO = Instantiate(mapNodeButtonPrefab, node.spawnPoint.position, Quaternion.identity, mapPanel);
             spawnedNodeButtons[node.nodeName] = newNodeGO;
@@ -100,25 +100,73 @@ public class MapManager : MonoBehaviour
         UpdateNodeInteractivity();
         DrawLinesBetweenNodes();
         ApplyNarrativeOverrides();
+        StretchLineParentToMatchPanel();
     }
+private void StretchLineParentToMatchPanel()
+{
+    RectTransform panelRect = mapPanel.GetComponent<RectTransform>();
+    RectTransform lineParentRect = lineParent.GetComponent<RectTransform>();
+
+    // Stretch to match parent anchors (fill)
+    lineParentRect.anchorMin = Vector2.zero;
+    lineParentRect.anchorMax = Vector2.one;
+    lineParentRect.offsetMin = Vector2.zero;
+    lineParentRect.offsetMax = Vector2.zero;
+
+    // Match scale/position if needed
+    lineParentRect.localScale = Vector3.one;
+    lineParentRect.localPosition = Vector3.zero;
+}
 
     private void DrawLinesBetweenNodes()
     {
         foreach (var node in nodes)
         {
-            if (!nodePositionLookup.ContainsKey(node.nodeName)) continue;
-            Vector2 start = nodePositionLookup[node.nodeName].anchoredPosition;
+            if (!nodePositionLookup.ContainsKey(node.nodeName))
+                continue;
+
+            RectTransform startRect = nodePositionLookup[node.nodeName];
 
             foreach (var targetName in node.connectedNodeNames)
             {
-                if (!nodePositionLookup.ContainsKey(targetName)) continue;
-                Vector2 end = nodePositionLookup[targetName].anchoredPosition;
+                if (!nodePositionLookup.ContainsKey(targetName))
+                    continue;
+
+                RectTransform endRect = nodePositionLookup[targetName];
+
+                // 🌐 Convert world positions to local relative to lineParent
+                Vector2 startWorld = startRect.position;
+                Vector2 endWorld = endRect.position;
+
+                Vector2 startLocal = lineParent.InverseTransformPoint(startWorld);
+                Vector2 endLocal = lineParent.InverseTransformPoint(endWorld);
+
+                Debug.Log($"🌐 World Start: {startWorld} → Local: {startLocal}");
+                Debug.Log($"🌐 World End: {endWorld} → Local: {endLocal}");
 
                 GameObject lineGO = Instantiate(linePrefab, lineParent);
+
+                RectTransform lineRect = lineGO.GetComponent<RectTransform>();
+                lineRect.anchorMin = Vector2.zero;
+                lineRect.anchorMax = Vector2.one;
+                lineRect.offsetMin = Vector2.zero;
+                lineRect.offsetMax = Vector2.zero;
+                lineRect.localScale = Vector3.one;
+
+                lineGO.transform.SetAsFirstSibling(); // push behind nodes
+
                 UILineRenderer line = lineGO.GetComponent<UILineRenderer>();
                 if (line != null)
                 {
-                    line.Points = new Vector2[] { start, end };
+                    line.Points = new Vector2[] { startLocal, endLocal };
+                    line.SetAllDirty();
+
+                    Debug.Log($"🧮 Line Points: {startLocal} → {endLocal}");
+                    Debug.Log($"✅ Line drawn from {node.nodeName} → {targetName}");
+                }
+                else
+                {
+                    Debug.LogError("❌ UILineRenderer missing on line prefab!");
                 }
             }
         }
@@ -252,4 +300,13 @@ public class MapManager : MonoBehaviour
             default: return MapNodeType.Puzzle;
         }
     }
+    
+    private IEnumerator DelayedDrawLines()
+{
+    yield return new WaitForEndOfFrame(); // Wait for layout to finish
+
+    // Now run DrawLinesBetweenNodes
+    DrawLinesBetweenNodes();
+}
+
 }

@@ -1,2 +1,15 @@
 fileFormatVersion: 2
 guid: 4b55751187b08f14abf6a70c2c6fbdd6
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - mapPanel: {instanceID: 0}
+  - mapNodeButtonPrefab: {instanceID: 0}
+  - linePrefab: {instanceID: 0}
+  - lineParent: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
