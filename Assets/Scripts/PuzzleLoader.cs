@@ -25,8 +25,8 @@ public class PuzzleLoader : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("No puzzle ID set. Defaulting to puzzle005.");
-            chosenFile = "Puzzles/puzzle005";
+            Debug.LogWarning("No puzzle ID set. Defaulting to puzzle006.");
+            chosenFile = "Puzzles/puzzle006";
         }
 
         TextAsset jsonText = Resources.Load<TextAsset>(chosenFile);

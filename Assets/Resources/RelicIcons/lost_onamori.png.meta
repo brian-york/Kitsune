@@ -134,7 +134,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      lost_onamori_0: -5359188523399114452
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

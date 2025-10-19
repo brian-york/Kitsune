@@ -134,7 +134,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      bamboo_shute_0: -6709126378164523766
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -9,84 +9,104 @@ public class GridSpawner : MonoBehaviour
     public TilePoolManager poolManager;
 
     void Start()
-{
-    if (poolManager == null)
     {
-        poolManager = FindFirstObjectByType<TilePoolManager>();
         if (poolManager == null)
         {
-            Debug.LogError("TilePoolManager not found in scene!");
+            poolManager = FindFirstObjectByType<TilePoolManager>();
+            if (poolManager == null)
+            {
+                Debug.LogError("TilePoolManager not found in scene!");
+                return;
+            }
+        }
+
+        for (int i = 0; i < 3; i++)
+        {
+            TileData drawnTile = poolManager.DrawTile();
+            if (drawnTile != null)
+                CreateTile(drawnTile);
+            else
+            {
+                Debug.Log("No more tiles left in the pool!");
+                break;
+            }
+        }
+
+        PuzzleLoader loader = FindFirstObjectByType<PuzzleLoader>();
+        PuzzleData puzzleData = loader.LoadPuzzle();
+
+        if (puzzleData == null || puzzleData.grid == null)
+        {
+            Debug.LogError("PuzzleData or its grid is null!");
             return;
         }
-    }
 
-    poolManager.InitializePool();
-    poolManager.ShufflePool();
+        Debug.Log("Grid loaded with " + puzzleData.grid.Count + " cells.");
 
-    for (int i = 0; i < 3; i++)
-    {
-        TileData drawnTile = poolManager.DrawTile();
-        if (drawnTile != null)
-            CreateTile(drawnTile);
+        string[,] narrativeDescriptions = new string[9, 9];
+        for (int row = 0; row < 9; row++)
+            for (int col = 0; col < 9; col++)
+            {
+                int index = row * 9 + col;
+                narrativeDescriptions[row, col] = (puzzleData.narrativeCellDescriptions != null && puzzleData.narrativeCellDescriptions.Count > index)
+                    ? puzzleData.narrativeCellDescriptions[index]
+                    : "";
+            }
+
+        PuzzleManager puzzleManager = FindFirstObjectByType<PuzzleManager>();
+        if (puzzleManager != null)
+        {
+            puzzleManager.isLoading = true;
+            puzzleManager.LoadPuzzle(puzzleData);
+            puzzleManager.isLoading = false;
+        }
         else
         {
-            Debug.Log("No more tiles left in the pool!");
-            break;
+            Debug.LogError("PuzzleManager not found!");
         }
-    }
 
-    PuzzleLoader loader = FindFirstObjectByType<PuzzleLoader>();
-    PuzzleData puzzleData = loader.LoadPuzzle();
-
-    if (puzzleData == null || puzzleData.grid == null)
-    {
-        Debug.LogError("PuzzleData or its grid is null!");
-        return;
-    }
-
-    Debug.Log("Grid loaded with " + puzzleData.grid.Count + " cells.");
-
-    // Convert narrative descriptions into a 2D array
-    string[,] narrativeDescriptions = new string[9, 9];
-    for (int row = 0; row < 9; row++)
-        for (int col = 0; col < 9; col++)
+        int[,] puzzleGrid = new int[9, 9];
+        string[,] cellStateGrid = new string[9, 9];
+        for (int row = 0; row < 9; row++)
         {
-            int index = row * 9 + col;
-            narrativeDescriptions[row, col] = (puzzleData.narrativeCellDescriptions != null && puzzleData.narrativeCellDescriptions.Count > index)
-                ? puzzleData.narrativeCellDescriptions[index]
-                : "";
+            for (int col = 0; col < 9; col++)
+            {
+                int index = row * 9 + col;
+                puzzleGrid[row, col] = puzzleData.grid[index];
+                cellStateGrid[row, col] = (puzzleData.cellStates != null && puzzleData.cellStates.Count > index)
+                    ? puzzleData.cellStates[index]
+                    : "Playable";
+            }
         }
 
-    // 🧩 Load puzzle data into PuzzleManager
-    PuzzleManager puzzleManager = FindFirstObjectByType<PuzzleManager>();
-    if (puzzleManager != null)
-    {
-        puzzleManager.isLoading = true;
-        puzzleManager.LoadPuzzle(puzzleData);
-        puzzleManager.isLoading = false;
-    }
-    else
-    {
-        Debug.LogError("PuzzleManager not found!");
+        GenerateGrid(puzzleGrid, cellStateGrid, narrativeDescriptions, puzzleData);
     }
 
-    // 🧱 Generate UI grid from data
-    int[,] puzzleGrid = new int[9, 9];
-    string[,] cellStateGrid = new string[9, 9];
-    for (int row = 0; row < 9; row++)
+    private void ApplyNarrativeRequirementOverride(CellController cellController, int row, int col, PuzzleData puzzleData)
     {
-        for (int col = 0; col < 9; col++)
+        if (puzzleData == null || puzzleData.narrativeRequirements == null)
+            return;
+
+        foreach (var requirement in puzzleData.narrativeRequirements)
         {
-            int index = row * 9 + col;
-            puzzleGrid[row, col] = puzzleData.grid[index];
-            cellStateGrid[row, col] = (puzzleData.cellStates != null && puzzleData.cellStates.Count > index)
-                ? puzzleData.cellStates[index]
-                : "Playable";
+            if (requirement.row == row && requirement.col == col)
+            {
+                cellController.narrativeCondition = new NarrativeCondition
+                {
+                    requiresSpecificTile = requirement.requiresSpecificTile,
+                    requiredTileNumber = requirement.requiredTileNumber,
+                    requiredTileEffect = NarrativeCondition.ParseTileEffect(requirement.requiredTileEffect)
+                };
+
+                Debug.Log($"🎯 Applied custom requirement to [{row},{col}]: " +
+                          $"RequireSpecific={requirement.requiresSpecificTile}, " +
+                          $"Number={requirement.requiredTileNumber}, " +
+                          $"Effect={requirement.requiredTileEffect}");
+                
+                return;
+            }
         }
     }
-
-    GenerateGrid(puzzleGrid, cellStateGrid, narrativeDescriptions, puzzleData.narrativeCells);
-}
 
     public void CreateTile(TileData tileData)
     {
@@ -120,9 +140,10 @@ public class GridSpawner : MonoBehaviour
         }
     }
 
-    void GenerateGrid(int[,] puzzle, string[,] cellStates, string[,] narrativeDescriptions, List<NarrativeCellEntry> narrativeCells)
+    void GenerateGrid(int[,] puzzle, string[,] cellStates, string[,] narrativeDescriptions, PuzzleData puzzleData)
     {
         var narrativeCellMap = new Dictionary<(int, int), string>();
+        List<NarrativeCellEntry> narrativeCells = puzzleData.narrativeCells;
         if (narrativeCells != null)
         {
             foreach (var entry in narrativeCells)
@@ -143,30 +164,28 @@ public class GridSpawner : MonoBehaviour
                 var cellController = newCell.GetComponent<CellController>();
                 cellController.SetupCell(row, col);
                 string description = "";
-if (narrativeCells != null)
-{
-    foreach (var entry in narrativeCells)
-    {
-        if (entry.row == row && entry.col == col)
-        {
-            description = entry.description;
-            break;
-        }
-    }
-}
-cellController.narrativeDescription = description;
-
+                if (narrativeCells != null)
+                {
+                    foreach (var entry in narrativeCells)
+                    {
+                        if (entry.row == row && entry.col == col)
+                        {
+                            description = entry.description;
+                            break;
+                        }
+                    }
+                }
+                cellController.narrativeDescription = description;
 
                 if (!string.IsNullOrEmpty(cellController.narrativeDescription))
-{
-    Debug.Log($"[GridSpawner] NarrativeDesc at [{row},{col}] = {cellController.narrativeDescription}");
-}
-else
-{
-    Debug.LogWarning($"[GridSpawner] No narrativeDesc at [{row},{col}] — narrativeCellType might not work!");
-}
+                {
+                    Debug.Log($"[GridSpawner] NarrativeDesc at [{row},{col}] = {cellController.narrativeDescription}");
+                }
+                else
+                {
+                    Debug.LogWarning($"[GridSpawner] No narrativeDesc at [{row},{col}] — narrativeCellType might not work!");
+                }
 
-                // Assign narrative type from JSON first
                 if (narrativeCellMap.TryGetValue((row, col), out string typeStr))
                 {
                     if (System.Enum.TryParse(typeStr, out CellController.NarrativeCellType parsed))
@@ -179,44 +198,43 @@ else
                     {
                         Debug.Log($"💰 Confirmed: Currency cell at [{row},{col}] from JSON.");
                     }
-
                     else
                     {
                         Debug.LogWarning($"❌ Could not parse narrativeCellType: '{typeStr}' at [{row},{col}]");
                     }
                 }
                 else if (!string.IsNullOrEmpty(narrativeDescriptions[row, col]))
-{
-    string desc = narrativeDescriptions[row, col].ToLower();
+                {
+                    string desc = narrativeDescriptions[row, col].ToLower();
 
-    if (desc.Contains("currency"))
-    {
-        cellController.narrativeCellType = CellController.NarrativeCellType.Currency;
-        Debug.Log($"💰 Assigned fallback Currency type to [{row},{col}] based on narrative description: {desc}");
-    }
-    else if (desc.Contains("shop"))
-    {
-        cellController.narrativeCellType = CellController.NarrativeCellType.Shop;
-        Debug.Log($"🛒 Assigned fallback Shop type to [{row},{col}] based on narrative description: {desc}");
-    }
-    else if (desc.Contains("relic"))
-    {
-        cellController.narrativeCellType = CellController.NarrativeCellType.RelicReward;
-        Debug.Log($"✨ Assigned fallback RelicReward type to [{row},{col}] based on narrative description: {desc}");
-    }
-    else
-    {
-        cellController.narrativeCellType = CellController.NarrativeCellType.Event;
-        Debug.Log($"📜 Assigned fallback Event type to [{row},{col}] based on narrative description: {desc}");
-    }
-}
-
-
-                
+                    if (desc.Contains("currency"))
+                    {
+                        cellController.narrativeCellType = CellController.NarrativeCellType.Currency;
+                        Debug.Log($"💰 Assigned fallback Currency type to [{row},{col}] based on narrative description: {desc}");
+                    }
+                    else if (desc.Contains("shop"))
+                    {
+                        cellController.narrativeCellType = CellController.NarrativeCellType.Shop;
+                        Debug.Log($"🛒 Assigned fallback Shop type to [{row},{col}] based on narrative description: {desc}");
+                    }
+                    else if (desc.Contains("relic"))
+                    {
+                        cellController.narrativeCellType = CellController.NarrativeCellType.RelicReward;
+                        Debug.Log($"✨ Assigned fallback RelicReward type to [{row},{col}] based on narrative description: {desc}");
+                    }
+                    else
+                    {
+                        cellController.narrativeCellType = CellController.NarrativeCellType.Event;
+                        Debug.Log($"📜 Assigned fallback Event type to [{row},{col}] based on narrative description: {desc}");
+                    }
+                }
 
                 if (cellController.narrativeCellType != CellController.NarrativeCellType.None)
                 {
                     cellController.narrativeCondition = new NarrativeRules().GetCondition(cellController.narrativeCellType);
+                    
+                    ApplyNarrativeRequirementOverride(cellController, row, col, puzzleData);
+                    
                     cellController.SetNarrativeCellColor();
                 }
 

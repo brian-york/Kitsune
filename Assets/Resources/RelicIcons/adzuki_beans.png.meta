@@ -134,7 +134,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      adzuki_beans_0: -1890837632684989995
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

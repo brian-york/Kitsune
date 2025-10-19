@@ -9,19 +9,34 @@ public class CellDropHandler : MonoBehaviour, IDropHandler
     public void OnDrop(PointerEventData eventData)
     {
         TileDragHandler tile = eventData.pointerDrag?.GetComponent<TileDragHandler>();
-        ScoreManager scoreManager = FindFirstObjectByType<ScoreManager>();
-        PuzzleManager puzzleManager = FindFirstObjectByType<PuzzleManager>();
-        GameManager gm = FindFirstObjectByType<GameManager>();
-
         if (tile == null) return;
 
         CellController cellController = GetComponent<CellController>();
+        PuzzleManager puzzleManager = FindFirstObjectByType<PuzzleManager>();
+        ScoreManager scoreManager = FindFirstObjectByType<ScoreManager>();
+        GameManager gm = FindFirstObjectByType<GameManager>();
+
+        if (!ValidateBasicDrop(tile, cellController, puzzleManager))
+        {
+            DestroyTileAndRefill(tile);
+            return;
+        }
+
+        ProcessNarrativeTriggers(tile, cellController, scoreManager, gm);
+
+        UpdatePuzzleState(tile, cellController, puzzleManager);
+
+        CalculateAndAwardScore(tile, puzzleManager, scoreManager, gm);
+
+        DestroyTileAndRefill(tile);
+    }
+
+    private bool ValidateBasicDrop(TileDragHandler tile, CellController cellController, PuzzleManager puzzleManager)
+    {
         if (cellController != null && cellController.locked)
         {
             Debug.Log($"Cell [{row},{col}] is locked. Rejecting drop.");
-            Destroy(tile.gameObject);
-            FindFirstObjectByType<GridSpawner>()?.RefillTileHand();
-            return;
+            return false;
         }
 
         Debug.Log($"Tile dropped on cell [{row},{col}] with value {tile.tileValue}");
@@ -29,101 +44,147 @@ public class CellDropHandler : MonoBehaviour, IDropHandler
         if (puzzleManager != null && !puzzleManager.IsValid(row, col, tile.tileValue))
         {
             Debug.Log("❌ Invalid placement. Tile destroyed, no score given.");
-            Destroy(tile.gameObject);
-            FindFirstObjectByType<GridSpawner>()?.RefillTileHand();
+            return false;
+        }
+
+        return true;
+    }
+
+    private void ProcessNarrativeTriggers(TileDragHandler tile, CellController cellController, ScoreManager scoreManager, GameManager gm)
+    {
+        if (cellController == null) return;
+        if (cellController.narrativeCellType == CellController.NarrativeCellType.None) return;
+        if (cellController.narrativeTriggered) return;
+
+        if (!ValidateNarrativeCondition(tile, cellController))
+        {
             return;
         }
 
+        Debug.Log($"✅ Narrative triggered at [{row},{col}]: {cellController.narrativeDescription}");
 
-        if (cellController != null && cellController.narrativeCellType != CellController.NarrativeCellType.None && !cellController.narrativeTriggered)
+        if (gm != null)
         {
-            bool passesCondition = true;
+            gm.lastTriggeredNarrative = cellController.narrativeDescription;
+            gm.lastTriggeredCellType = cellController.narrativeCellType;
+        }
 
-            if (cellController.narrativeCondition != null && cellController.narrativeCondition.requiresSpecificTile)
+        ProgressManager progress = ProgressManager.Instance;
+        if (progress != null)
+        {
+            progress.SetNarrativeTrigger(cellController.narrativeCellType);
+            Debug.Log($"🧠 ProgressManager updated: Triggered narrative type = {cellController.narrativeCellType}");
+        }
+
+        if (cellController.narrativeCellType == CellController.NarrativeCellType.Currency)
+        {
+            ProcessCurrencyCell(cellController, scoreManager);
+        }
+
+        cellController.narrativeTriggered = true;
+    }
+
+   private bool ValidateNarrativeCondition(TileDragHandler tile, CellController cellController)
+{
+    if (cellController.narrativeCondition == null) return true;
+    if (!cellController.narrativeCondition.requiresSpecificTile) return true;
+
+    if (cellController.narrativeCondition.requiredTileNumber > 0)
+    {
+        if (tile.tileValue != cellController.narrativeCondition.requiredTileNumber)
+        {
+            Debug.Log($"❌ Narrative condition failed at [{row},{col}]. Required number: {cellController.narrativeCondition.requiredTileNumber}, Got: {tile.tileValue}");
+            return false;
+        }
+    }
+
+    if (cellController.narrativeCondition.requiredTileEffect != TileEffect.None)
+    {
+        if (tile.tileData.tileEffect != cellController.narrativeCondition.requiredTileEffect)
+        {
+            Debug.Log($"❌ Narrative condition failed at [{row},{col}]. Required effect: {cellController.narrativeCondition.requiredTileEffect}, Got: {tile.tileData.tileEffect}");
+            return false;
+        }
+    }
+
+    return true;
+}
+
+
+    private void ProcessCurrencyCell(CellController cellController, ScoreManager scoreManager)
+    {
+        Debug.Log($"💰 [CurrencyCell] Triggered at [{row},{col}]");
+
+        int currencyAmount = 1;
+
+        var relics = ProgressManager.Instance?.collectedRelics;
+        if (relics != null && relics.Count > 0)
+        {
+            foreach (var relic in relics)
             {
-                passesCondition = tile.tileValue == cellController.narrativeCondition.requiredTileNumber;
-                if (!passesCondition)
-                {
-                    Debug.Log($"❌ Narrative condition failed at [{row},{col}]. Required: {cellController.narrativeCondition.requiredTileNumber}, Got: {tile.tileValue}");
-                    Destroy(tile.gameObject);
-                    FindFirstObjectByType<GridSpawner>()?.RefillTileHand();
-                    return;
-                }
-            }
-
-            if (passesCondition)
-            {
-                Debug.Log($"✅ Narrative triggered at [{row},{col}]: {cellController.narrativeDescription}");
-
-                // Store last triggered narrative
-                if (gm != null)
-                {
-                    gm.lastTriggeredNarrative = cellController.narrativeDescription;
-                    gm.lastTriggeredCellType = cellController.narrativeCellType;
-                }
-
-                ProgressManager progress = ProgressManager.Instance;
-                if (progress != null)
-                {
-                    progress.SetNarrativeTrigger(cellController.narrativeCellType);
-                    Debug.Log($"🧠 ProgressManager updated: Triggered narrative type = {cellController.narrativeCellType}");
-                }
-
-
-                // 💰 Currency Logic with Relic Evaluation
-                if (cellController.narrativeCellType == CellController.NarrativeCellType.Currency)
-                {
-                    int currencyAmount = 1;
-
-                    var relics = ProgressManager.Instance?.collectedRelics;
-                    if (relics != null && relics.Count > 0)
-                    {
-                        foreach (var relic in relics)
-                        {
-                            Debug.Log($"[🔍 Relic Evaluation] Calling {relic.name}.OnCurrencyGain()...");
-                            relic.OnCurrencyGain(ref currencyAmount, cellController);
-                        }
-                    }
-
-                    ProgressManager.Instance?.AddCurrency(currencyAmount);
-                    Debug.Log($"💰 Currency awarded for playing on Currency cell. Final amount: {currencyAmount}");
-
-                    if (scoreManager != null)
-                    {
-                        Vector3 popupPosition = transform.position + new Vector3(0, 50, 0);
-                        scoreManager.ShowCurrencyPopup(currencyAmount, popupPosition);
-                    }
-                }
-
-                cellController.narrativeTriggered = true;
-                
-            
+                Debug.Log($"[🔍 Relic] Evaluating {relic.name}.OnCurrencyGain()");
+                relic.OnCurrencyGain(ref currencyAmount, cellController);
             }
         }
 
-        // ✅ Update puzzle grid and UI
+        ProgressManager.Instance?.AddCurrency(currencyAmount);
+        Debug.Log($"💰 Currency awarded: {currencyAmount}");
+
+        if (HarmonyManager.Instance != null)
+        {
+            HarmonyManager.Instance.AddHarmony(10, $"Currency cell at [{row},{col}]");
+            Debug.Log($"⚖️ Harmony awarded: +10");
+        }
+        else
+        {
+            Debug.LogWarning("⚠️ HarmonyManager not found in scene.");
+        }
+
+        if (scoreManager != null)
+        {
+            Vector3 popupPosition = transform.position + new Vector3(0, 50, 0);
+            scoreManager.ShowCurrencyPopup(currencyAmount, popupPosition);
+        }
+    }
+
+    private void UpdatePuzzleState(TileDragHandler tile, CellController cellController, PuzzleManager puzzleManager)
+    {
         puzzleManager?.UpdateCell(row, col, tile.tileValue);
         cellController?.SetValue(tile.tileValue, true);
+    }
 
-        // 🧮 Scoring
+    private void CalculateAndAwardScore(TileDragHandler tile, PuzzleManager puzzleManager, ScoreManager scoreManager, GameManager gm)
+    {
         ScoringManager scoringManager = FindFirstObjectByType<ScoringManager>();
-        if (scoringManager != null && scoreManager != null)
-        {
-            TileScoreBreakdown breakdown = scoringManager.CalculateTileScore(row, col, tile.tileData, puzzleManager.playerGrid);
-            Vector3 cellWorldPos = transform.position;
+        if (scoringManager == null || scoreManager == null) return;
 
-            float delay = 0f;
-            scoreManager.ShowPopupDelayed(breakdown.basePoints, "Tile", cellWorldPos + Vector3.zero, delay += 0f);
-            if (breakdown.boxSum > 0) scoreManager.ShowPopupDelayed(breakdown.boxSum, "Box Sum", cellWorldPos + new Vector3(0, 50, 0), delay += 0.5f);
-            if (breakdown.rowSum > 0) scoreManager.ShowPopupDelayed(breakdown.rowSum, "Row Sum", cellWorldPos + new Vector3(-50, 0, 0), delay += 0.5f);
-            if (breakdown.colSum > 0) scoreManager.ShowPopupDelayed(breakdown.colSum, "Col Sum", cellWorldPos + new Vector3(0, -50, 0), delay += 0.5f);
-            if (breakdown.tileEffectBonus > 0) scoreManager.ShowPopupDelayed(breakdown.tileEffectBonus, "Tile Bonus", cellWorldPos + new Vector3(50, 0, 0), delay += 0.5f);
-            if (breakdown.relicBonus > 0) scoreManager.ShowPopupDelayed(breakdown.relicBonus, "Relic Bonus", cellWorldPos + new Vector3(0, 100, 0), delay += 0.5f);
+        TileScoreBreakdown breakdown = scoringManager.CalculateTileScore(row, col, tile.tileData, puzzleManager.playerGrid);
+        Vector3 cellWorldPos = transform.position;
 
-            scoreManager.AddScore(breakdown.totalPoints);
-            gm?.CheckForLevelComplete(scoreManager.currentScore);
-        }
+        float delay = 0f;
+        scoreManager.ShowPopupDelayed(breakdown.basePoints, "Tile", cellWorldPos + Vector3.zero, delay += 0f);
+        
+        if (breakdown.boxSum > 0)
+            scoreManager.ShowPopupDelayed(breakdown.boxSum, "Box Sum", cellWorldPos + new Vector3(0, 50, 0), delay += 0.5f);
+        
+        if (breakdown.rowSum > 0)
+            scoreManager.ShowPopupDelayed(breakdown.rowSum, "Row Sum", cellWorldPos + new Vector3(-50, 0, 0), delay += 0.5f);
+        
+        if (breakdown.colSum > 0)
+            scoreManager.ShowPopupDelayed(breakdown.colSum, "Col Sum", cellWorldPos + new Vector3(0, -50, 0), delay += 0.5f);
+        
+        if (breakdown.tileEffectBonus > 0)
+            scoreManager.ShowPopupDelayed(breakdown.tileEffectBonus, "Tile Bonus", cellWorldPos + new Vector3(50, 0, 0), delay += 0.5f);
+        
+        if (breakdown.relicBonus > 0)
+            scoreManager.ShowPopupDelayed(breakdown.relicBonus, "Relic Bonus", cellWorldPos + new Vector3(0, 100, 0), delay += 0.5f);
 
+        scoreManager.AddScore(breakdown.totalPoints);
+        gm?.CheckForLevelComplete(scoreManager.currentScore);
+    }
+
+    private void DestroyTileAndRefill(TileDragHandler tile)
+    {
         Destroy(tile.gameObject);
         FindFirstObjectByType<GridSpawner>()?.RefillTileHand();
     }

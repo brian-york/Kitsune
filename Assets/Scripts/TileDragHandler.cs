@@ -12,7 +12,6 @@ public class TileDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     private CanvasGroup canvasGroup;
     private RectTransform rectTransform;
     private Transform originalParent;
-   
 
     void Awake()
     {
@@ -23,10 +22,7 @@ public class TileDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     public void OnBeginDrag(PointerEventData eventData)
     {
         originalParent = transform.parent;
-
-        // Move tile to root Canvas so it appears above everything
         transform.SetParent(transform.root);
-
         canvasGroup.blocksRaycasts = false;
     }
 
@@ -38,36 +34,29 @@ public class TileDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     public void OnEndDrag(PointerEventData eventData)
     {
         canvasGroup.blocksRaycasts = true;
-
-        // Snap back to original spot if not dropped on target
         transform.SetParent(originalParent);
         rectTransform.anchoredPosition = Vector2.zero;
     }
 
     public void SetTileData(TileData tileData)
-{
-    this.tileData = tileData;            // Save the entire TileData object here
-
-    tileValue = tileData.number;
-    tileEffect = tileData.tileEffect;
-    scoreBonus = tileData.scoreBonus;
-
-    if (numberText != null)
     {
-        numberText.text = tileData.number.ToString();
+        this.tileData = tileData;
+        tileValue = tileData.number;
+        tileEffect = tileData.tileEffect;
+        scoreBonus = tileData.scoreBonus;
+
+        if (numberText != null)
+        {
+            string symbol = ProgressManager.GetSymbolForEffect(tileEffect);
+            numberText.text = string.IsNullOrEmpty(symbol) 
+                ? tileData.number.ToString() 
+                : $"{symbol} {tileData.number}";
+        }
+
+        var img = GetComponent<UnityEngine.UI.Image>();
+        if (img != null)
+        {
+            img.color = tileData.tileColor;
+        }
     }
-
-    // Optional: Apply tile color
-    UnityEngine.UI.Image img = GetComponent<UnityEngine.UI.Image>();
-if (img != null)
-{
-    img.color = tileData.tileColor;
-    Debug.Log($"Tile color set to: {tileData.tileColor}");
-}
-else
-{
-    Debug.LogError("No Image component found on TileDragHandler object!");
-}
-
-}
 }

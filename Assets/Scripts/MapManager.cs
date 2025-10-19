@@ -36,87 +36,181 @@ public class MapManager : MonoBehaviour
     private Dictionary<string, RectTransform> nodePositionLookup = new Dictionary<string, RectTransform>();
     private Dictionary<string, MapNodeData> nodeLookup = new Dictionary<string, MapNodeData>();
 
-    private void Start()
+   private void Start()
+{
+    Debug.Log("🟢 MapManager.Start() has run");
+    Debug.Log($"🔍 MapManager starting with {nodes.Count} nodes, prefab: {mapNodeButtonPrefab?.name}, panel: {mapPanel?.name}");
+
+    PuzzlePool.Initialize();
+
+    foreach (var node in nodes)
     {
-        Debug.Log("🟢 MapManager.Start() has run");
+        nodeLookup[node.nodeName] = node;
+    }
 
-        PuzzlePool.Initialize();
-
-        // Build node lookup for prerequisites
-        foreach (var node in nodes)
+    foreach (var node in nodes)
+    {
+        Debug.Log($"🔍 Processing node: {node.nodeName}, spawnPoint: {node.spawnPoint?.name}");
+        
+        if (node.nodeType == MapNodeType.Puzzle)
         {
-            nodeLookup[node.nodeName] = node;
+            if (ProgressManager.Instance.HasPuzzleAssignment(node.nodeName))
+            {
+                node.puzzleId = ProgressManager.Instance.GetPuzzleForNode(node.nodeName);
+                Debug.Log($"📂 Loaded saved puzzle '{node.puzzleId}' for node '{node.nodeName}'");
+            }
+            else
+            {
+                node.puzzleId = PuzzlePool.GetRandomPuzzle(node.difficulty);
+                ProgressManager.Instance.SetPuzzleForNode(node.nodeName, node.puzzleId);
+                Debug.Log($"🎲 Assigned new puzzle '{node.puzzleId}' to node '{node.nodeName}'");
+            }
+
+            node.isCompleted = ProgressManager.Instance.IsNodeCompleted(node.nodeName);
         }
 
-        foreach (var node in nodes)
+        Debug.Log($"🔍 About to instantiate for node: {node.nodeName}");
+        GameObject newNodeGO = Instantiate(mapNodeButtonPrefab, node.spawnPoint.position, Quaternion.identity, mapPanel);
+        Debug.Log($"🔍 Instantiated: {newNodeGO.name}");
+
+        spawnedNodeButtons[node.nodeName] = newNodeGO;
+
+        RectTransform rect = newNodeGO.GetComponent<RectTransform>();
+        if (rect != null)
         {
-            // Assign a puzzle ID if not already set
-            if (node.nodeType == MapNodeType.Puzzle)
+            nodePositionLookup[node.nodeName] = rect;
+        }
+
+        var button = newNodeGO.GetComponent<Button>();
+        if (button != null)
+        {
+            MapNodeData localNode = node;
+            button.onClick.AddListener(() => OnNodeClicked(localNode));
+        }
+
+        var mapNode = newNodeGO.GetComponent<MapNode>();
+        if (mapNode != null)
+        {
+            Debug.Log($"🔍 Found MapNode component on {newNodeGO.name}");
+            mapNode.nodeName = node.nodeName;
+            mapNode.puzzleId = node.puzzleId;
+            mapNode.nodeType = node.nodeType;
+
+            Debug.Log($"🔍 Calling UpdateVisuals on {mapNode.nodeName}");
+
+            try
             {
-                if (ProgressManager.Instance.HasPuzzleAssignment(node.nodeName))
-                {
-                    node.puzzleId = ProgressManager.Instance.GetPuzzleForNode(node.nodeName);
-                    Debug.Log($"📂 Loaded saved puzzle '{node.puzzleId}' for node '{node.nodeName}'");
-                }
-                else
-                {
-                    node.puzzleId = PuzzlePool.GetRandomPuzzle(node.difficulty);
-                    ProgressManager.Instance.SetPuzzleForNode(node.nodeName, node.puzzleId);
-                    Debug.Log($"🎲 Assigned new puzzle '{node.puzzleId}' to node '{node.nodeName}'");
-                }
+                mapNode.UpdateVisuals();
+                Debug.Log($"🔍 UpdateVisuals completed successfully for {mapNode.nodeName}");
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"❌ CRITICAL: UpdateVisuals failed for {mapNode.nodeName}: {e.Message}");
+                Debug.LogException(e);
             }
 
-            GameObject newNodeGO = Instantiate(mapNodeButtonPrefab, node.spawnPoint.position, Quaternion.identity, mapPanel);
-            spawnedNodeButtons[node.nodeName] = newNodeGO;
+            Debug.Log($"🔍 Continuing MapManager.Start() after UpdateVisuals");
+        }
+        else
+        {
+            Debug.LogError($"❌ No MapNode component found on instantiated object: {newNodeGO.name}");
+        }
+    }
 
-            RectTransform rect = newNodeGO.GetComponent<RectTransform>();
-            if (rect != null)
-            {
-                nodePositionLookup[node.nodeName] = rect;
-            }
+    UpdateNodeInteractivity();
+    DrawLinesBetweenNodes();
+    ApplyNarrativeOverrides();
+    StretchLineParentToMatchPanel();
+}
 
-            var button = newNodeGO.GetComponent<Button>();
-            if (button != null)
-            {
-                MapNodeData localNode = node;
-                button.onClick.AddListener(() => OnNodeClicked(localNode));
-            }
-
-            var mapNode = newNodeGO.GetComponent<MapNode>();
+    
+    public void UpdateNextNodeTypeFromNarrative()
+{
+    if (!ProgressManager.Instance.narrativeTriggeredThisPuzzle)
+    {
+        Debug.Log("📍 No narrative triggered this puzzle, skipping node update");
+        return;
+    }
+    
+    var triggeredType = ProgressManager.Instance.narrativeTypeTriggered;
+    string currentNode = ProgressManager.Instance.currentNodeName;
+    
+    Debug.Log($"📍 Narrative triggered: {triggeredType} from node {currentNode}");
+    
+    MapNodeData nextNode = FindNextUncompletedNode(currentNode);
+    
+    if (nextNode != null)
+    {
+        MapNodeType newType = ConvertNarrativeToMapType(triggeredType);
+        nextNode.nodeType = newType;
+        
+        if (spawnedNodeButtons.TryGetValue(nextNode.nodeName, out GameObject nodeGO))
+        {
+            MapNode mapNode = nodeGO.GetComponent<MapNode>();
             if (mapNode != null)
             {
-                mapNode.puzzleId = node.puzzleId;
-                mapNode.nodeType = node.nodeType;
+                mapNode.nodeType = newType;
                 mapNode.UpdateVisuals();
-            }
-
-            var iconHandler = newNodeGO.GetComponent<MapNodeIconHandler>();
-            if (iconHandler != null)
-            {
-                iconHandler.SetIcon(node.nodeType);
+                Debug.Log($"✅ Changed {nextNode.nodeName} to {newType}");
             }
         }
-
-        UpdateNodeInteractivity();
-        DrawLinesBetweenNodes();
-        ApplyNarrativeOverrides();
-        StretchLineParentToMatchPanel();
+        
+        ProgressManager.Instance.narrativeTriggeredThisPuzzle = false;
     }
-private void StretchLineParentToMatchPanel()
-{
-    RectTransform panelRect = mapPanel.GetComponent<RectTransform>();
-    RectTransform lineParentRect = lineParent.GetComponent<RectTransform>();
-
-    // Stretch to match parent anchors (fill)
-    lineParentRect.anchorMin = Vector2.zero;
-    lineParentRect.anchorMax = Vector2.one;
-    lineParentRect.offsetMin = Vector2.zero;
-    lineParentRect.offsetMax = Vector2.zero;
-
-    // Match scale/position if needed
-    lineParentRect.localScale = Vector3.one;
-    lineParentRect.localPosition = Vector3.zero;
 }
+
+private MapNodeData FindNextUncompletedNode(string fromNodeName)
+{
+    if (!nodeLookup.TryGetValue(fromNodeName, out MapNodeData currentNode))
+        return null;
+    
+    foreach (string connectedName in currentNode.connectedNodeNames)
+    {
+        if (nodeLookup.TryGetValue(connectedName, out MapNodeData connected))
+        {
+            if (!connected.isCompleted)
+            {
+                Debug.Log($"📍 Found next node: {connectedName}");
+                return connected;
+            }
+        }
+    }
+    
+    return null;
+}
+
+private MapNodeType ConvertNarrativeToMapType(CellController.NarrativeCellType narrativeType)
+{
+    switch (narrativeType)
+    {
+        case CellController.NarrativeCellType.Shop:
+            return MapNodeType.Shop;
+        case CellController.NarrativeCellType.Event:
+            return MapNodeType.Event;
+        case CellController.NarrativeCellType.Boss:
+            return MapNodeType.Boss;
+        default:
+            return MapNodeType.Puzzle;
+    }
+}
+
+    
+  
+private void StretchLineParentToMatchPanel()
+    {
+        RectTransform panelRect = mapPanel.GetComponent<RectTransform>();
+        RectTransform lineParentRect = lineParent.GetComponent<RectTransform>();
+
+        // Stretch to match parent anchors (fill)
+        lineParentRect.anchorMin = Vector2.zero;
+        lineParentRect.anchorMax = Vector2.one;
+        lineParentRect.offsetMin = Vector2.zero;
+        lineParentRect.offsetMax = Vector2.zero;
+
+        // Match scale/position if needed
+        lineParentRect.localScale = Vector3.one;
+        lineParentRect.localPosition = Vector3.zero;
+    }
 
     private void DrawLinesBetweenNodes()
     {
@@ -180,6 +274,7 @@ private void StretchLineParentToMatchPanel()
             if (!string.IsNullOrEmpty(node.puzzleId))
             {
                 ProgressManager.Instance.currentPuzzleId = node.puzzleId;
+                ProgressManager.Instance.currentNodeName = node.nodeName;
                 SceneManager.LoadScene("SudokuScene");
             }
         }
@@ -197,41 +292,94 @@ private void StretchLineParentToMatchPanel()
         }
     }
 
-    private void UpdateNodeInteractivity()
-    {
-        foreach (var node in nodes)
+private void UpdateNodeInteractivity()
+{
+    Debug.Log($"🚨 UpdateNodeInteractivity ENTRY - nodes.Count: {nodes?.Count ?? 0}, spawnedNodeButtons.Count: {spawnedNodeButtons?.Count ?? 0}");
+    foreach (var node in nodes)
         {
             bool shouldUnlock = true;
 
+            // ✅ Split comma-separated prerequisites
             if (!string.IsNullOrEmpty(node.prerequisiteNodeName))
             {
-                if (nodeLookup.TryGetValue(node.prerequisiteNodeName, out MapNodeData prereq))
+                string[] prereqNames = node.prerequisiteNodeName.Split(',');
+
+                foreach (string rawName in prereqNames)
                 {
-                    shouldUnlock = prereq.isCompleted;
-                }
-                else
-                {
-                    Debug.LogWarning($"❓ Prerequisite node '{node.prerequisiteNodeName}' not found for '{node.nodeName}'");
-                    shouldUnlock = false;
+                    string prereqName = rawName.Trim();
+
+                    if (nodeLookup.TryGetValue(prereqName, out MapNodeData prereq))
+                    {
+                        if (!prereq.isCompleted)
+                        {
+                            shouldUnlock = false;
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"❓ Prerequisite node '{prereqName}' not found for '{node.nodeName}'");
+                        shouldUnlock = false;
+                        break;
+                    }
                 }
             }
 
-            if (shouldUnlock && !node.isUnlocked)
-            {
-                node.isUnlocked = true;
-                Debug.Log($"🔓 Unlocking node: {node.nodeName}");
-            }
+            node.isUnlocked = shouldUnlock;
 
             if (spawnedNodeButtons.TryGetValue(node.nodeName, out GameObject go))
             {
+                Debug.Log($"🧭 {node.nodeName} - unlocked: {node.isUnlocked}, completed: {node.isCompleted}");
+
                 var button = go.GetComponent<Button>();
                 if (button != null)
                 {
                     button.interactable = node.isUnlocked && !node.isCompleted;
+                    Debug.Log($"🔘 {node.nodeName} button interactable: {button.interactable}");
+                }
+
+                // Visual effects
+                Transform nodeTransform = go.transform;
+                nodeTransform.localScale = node.isUnlocked ? Vector3.one * 1.2f : Vector3.one;
+
+                // ✅ FIXED: Color setting with proper scoping
+                var backgroundImage = go.GetComponent<Image>(); // Main background image
+                if (backgroundImage != null)
+                {
+                    Color targetColor;
+                    if (node.isCompleted)
+                    {
+                        targetColor = Color.gray;
+                        Debug.Log($"🎨 Setting {node.nodeName} to GREY (completed)");
+                    }
+                    else if (node.isUnlocked)
+                    {
+                        targetColor = Color.white;
+                        Debug.Log($"🎨 Setting {node.nodeName} to WHITE (available)");
+                    }
+                    else
+                    {
+                        targetColor = Color.gray;
+                        Debug.Log($"🎨 Setting {node.nodeName} to GRAY (locked)");
+                    }
+
+                    backgroundImage.color = targetColor;
+                    Debug.Log($"🎨 {node.nodeName} background color set to: {backgroundImage.color}");
+                }
+                else
+                {
+                    Debug.LogError($"❌ No background Image found on {node.nodeName}");
                 }
             }
+            else
+            {
+                Debug.LogWarning($"❓ No spawned button found for node: {node.nodeName}");
+            }
         }
-    }
+}
+
+
+
 
     public void MarkNodeComplete(string nodeName)
     {
@@ -262,33 +410,43 @@ private void StretchLineParentToMatchPanel()
     }
 
     private void ApplyNarrativeOverrides()
+{
+    ProgressManager progress = ProgressManager.Instance;
+    if (progress != null && progress.narrativeTriggeredThisPuzzle)
     {
-        ProgressManager progress = ProgressManager.Instance;
-        if (progress != null && progress.narrativeTriggeredThisPuzzle)
+        MapNodeType newType = ConvertNarrativeToNodeType(progress.narrativeTypeTriggered);
+        int nodesUpdated = 0;
+
+        foreach (var node in nodes)
         {
-            foreach (var node in nodes)
+            if (node.isUnlocked && !node.isCompleted)
             {
-                if (node.isUnlocked && !node.isCompleted)
+                if (spawnedNodeButtons.TryGetValue(node.nodeName, out GameObject go))
                 {
-                    if (spawnedNodeButtons.TryGetValue(node.nodeName, out GameObject go))
+                    MapNode mapNodeComponent = go.GetComponent<MapNode>();
+                    if (mapNodeComponent != null)
                     {
-                        MapNode mapNodeComponent = go.GetComponent<MapNode>();
-                        if (mapNodeComponent != null)
-                        {
-                            MapNodeType newType = ConvertNarrativeToNodeType(progress.narrativeTypeTriggered);
-                            mapNodeComponent.nodeType = newType;
-                            mapNodeComponent.UpdateVisuals();
-                            Debug.Log($"🌀 Narrative Routing: Setting node '{node.nodeName}' to type {newType}");
-                        }
+                        node.nodeType = newType;
+                        mapNodeComponent.nodeType = newType;
+                        mapNodeComponent.UpdateVisuals();
+                        nodesUpdated++;
+                        Debug.Log($"🌀 Narrative Routing: Changed node '{node.nodeName}' to {newType}");
                     }
-                    break;
                 }
             }
-
-            progress.narrativeTriggeredThisPuzzle = false;
-            progress.narrativeTypeTriggered = CellController.NarrativeCellType.None;
         }
+
+        Debug.Log($"✅ Applied narrative override ({newType}) to {nodesUpdated} interactable node(s)");
+
+        progress.narrativeTriggeredThisPuzzle = false;
+        progress.narrativeTypeTriggered = CellController.NarrativeCellType.None;
     }
+    else
+    {
+        Debug.Log("📍 No narrative trigger to apply in ApplyNarrativeOverrides");
+    }
+}
+
 
     private MapNodeType ConvertNarrativeToNodeType(CellController.NarrativeCellType narrativeType)
     {

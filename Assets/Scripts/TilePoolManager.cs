@@ -3,69 +3,95 @@ using UnityEngine;
 
 public class TilePoolManager : MonoBehaviour
 {
-    public List<TileData> availableTiles = new List<TileData>();
-    private List<TileData> tilePool = new List<TileData>();
+    private List<TileData> drawPile = new List<TileData>();
+    private List<TileData> discardPile = new List<TileData>();
 
     void Start()
     {
-        InitializePool();
-        ShufflePool();
+        PrepareDrawPile();
     }
 
-    public void InitializePool()
-{
-    tilePool.Clear();
-
-    foreach (TileData tile in availableTiles)
+    private void PrepareDrawPile()
     {
-        for (int i = 0; i < tile.copies; i++)
+        drawPile.Clear();
+        discardPile.Clear();
+
+        if (ProgressManager.Instance == null)
         {
-            tilePool.Add(new TileData(
+            Debug.LogError("⚠️ ProgressManager not found! Cannot create tile pool.");
+            return;
+        }
+
+        foreach (var tile in ProgressManager.Instance.playerTileCollection)
+        {
+            drawPile.Add(new TileData(
                 tile.number,
-                tile.tileColor != Color.clear ? tile.tileColor : KitsuneColors.WashedRicePaper,
+                tile.tileColor,
                 tile.tileEffect,
                 tile.scoreBonus,
                 tile.isWild,
                 tile.narrativeTag
             ));
         }
+
+        ShuffleDrawPile();
+        Debug.Log($"🔀 Draw pile prepared with {drawPile.Count} tiles from ProgressManager");
     }
 
-    Debug.Log("Tile pool initialized with " + tilePool.Count + " tiles.");
-}
-
-    public void ShufflePool()
+    private void ShuffleDrawPile()
     {
-        for (int i = 0; i < tilePool.Count; i++)
-{
-    int randomIndex = Random.Range(i, tilePool.Count);
-
-    TileData temp = tilePool[i];
-    tilePool[i] = tilePool[randomIndex];
-    tilePool[randomIndex] = temp;
-}
-
-        Debug.Log("Tile pool shuffled.");
+        for (int i = 0; i < drawPile.Count; i++)
+        {
+            int randomIndex = Random.Range(i, drawPile.Count);
+            TileData temp = drawPile[i];
+            drawPile[i] = drawPile[randomIndex];
+            drawPile[randomIndex] = temp;
+        }
     }
 
     public TileData DrawTile()
-{
-    if (tilePool.Count > 0)
     {
-        TileData drawnTile = tilePool[0];
-        tilePool.RemoveAt(0);
-        Debug.Log("Drew tile: " + drawnTile.number);
+        if (drawPile.Count == 0)
+        {
+            if (discardPile.Count > 0)
+            {
+                Debug.Log("♻️ Reshuffling discard pile into draw pile");
+                drawPile.AddRange(discardPile);
+                discardPile.Clear();
+                ShuffleDrawPile();
+            }
+            else
+            {
+                Debug.LogWarning("⚠️ No tiles left in collection!");
+                return null;
+            }
+        }
+
+        TileData drawnTile = drawPile[0];
+        drawPile.RemoveAt(0);
+        Debug.Log($"Drew tile: {drawnTile.number} ({drawnTile.tileEffect})");
         return drawnTile;
     }
-    else
+
+    public void DiscardTile(TileData tile)
     {
-        Debug.Log("Tile pool is empty!");
-        return null;
+        discardPile.Add(tile);
     }
-}
 
     public bool IsPoolEmpty()
     {
-        return tilePool.Count == 0;
+        return drawPile.Count == 0 && discardPile.Count == 0;
+    }
+
+    public void ResetForNewPuzzle()
+    {
+        PrepareDrawPile();
+        Debug.Log("🔄 Tile pool reset for new puzzle");
+    }
+
+    [ContextMenu("View Pool State")]
+    public void ViewPoolState()
+    {
+        Debug.Log($"📊 Draw pile: {drawPile.Count} | Discard pile: {discardPile.Count}");
     }
 }

@@ -12,8 +12,8 @@ GameObject:
   - component: {fileID: 1786015908717779268}
   - component: {fileID: 8154823088602115727}
   - component: {fileID: 5471918607359230776}
-  - component: {fileID: 9183742392520745905}
   - component: {fileID: 6533884290616780630}
+  - component: {fileID: 7254744177735954393}
   m_Layer: 5
   m_Name: MapNodeButton
   m_TagString: Untagged
@@ -63,7 +63,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.003921569}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -105,7 +105,7 @@ MonoBehaviour:
     m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
     m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
     m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_DisabledColor: {r: 0.3018868, g: 0.3018868, b: 0.3018868, a: 0.65882355}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
   m_SpriteState:
@@ -124,23 +124,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &9183742392520745905
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2978105574903489592}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 41ebb526914bdea4a9614f4e3e37ee56, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  iconImage: {fileID: 7648585144154647931}
-  puzzleIcon: {fileID: 7335142774916837559, guid: 3aab4a2158f2fc541a567f24c8717f3a, type: 3}
-  shopIcon: {fileID: -137272380686697979, guid: 998451ad9738c28409f132b38b8d0349, type: 3}
-  eventIcon: {fileID: 2820106595402749470, guid: e8aa5e800dfe26844a7b796b27eea1bc, type: 3}
-  bossIcon: {fileID: 3526388839498037667, guid: 274a72e58e75478418eacebd1d4fbe11, type: 3}
 --- !u!114 &6533884290616780630
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -153,6 +136,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ccec8bff5f61523499961db5bc3cae1f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &7254744177735954393
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2978105574903489592}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf089f98903d9c14ba3e6e81d7fc72bf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MapNode
+  nodeName: 
+  puzzleId: 
+  nodeType: 0
+  iconImage: {fileID: 7648585144154647931}
+  puzzleIcon: {fileID: 7335142774916837559, guid: 3aab4a2158f2fc541a567f24c8717f3a, type: 3}
+  shopIcon: {fileID: -137272380686697979, guid: 998451ad9738c28409f132b38b8d0349, type: 3}
+  eventIcon: {fileID: 2820106595402749470, guid: e8aa5e800dfe26844a7b796b27eea1bc, type: 3}
+  bossIcon: {fileID: 3526388839498037667, guid: 274a72e58e75478418eacebd1d4fbe11, type: 3}
 --- !u!1 &5860339980959584667
 GameObject:
   m_ObjectHideFlags: 0

@@ -10,18 +10,14 @@ public class NarrativeRules
     {
         narrativeConditions = new Dictionary<CellController.NarrativeCellType, NarrativeCondition>();
 
-        // Example rules:
         narrativeConditions[CellController.NarrativeCellType.Shop] = new NarrativeCondition
         {
-            requiresSpecificTile = true,
-            requiredTileNumber = 3,
-            requiredTileEffect = TileEffect.None
+            requiresSpecificTile = false
         };
 
         narrativeConditions[CellController.NarrativeCellType.Boss] = new NarrativeCondition
         {
-            requiresSpecificTile = true,
-            requiredTileEffect = TileEffect.Flame
+            requiresSpecificTile = false
         };
 
         narrativeConditions[CellController.NarrativeCellType.RelicReward] = new NarrativeCondition
@@ -33,6 +29,11 @@ public class NarrativeRules
         {
             requiresSpecificTile = false
         };
+
+        narrativeConditions[CellController.NarrativeCellType.Currency] = new NarrativeCondition
+        {
+            requiresSpecificTile = false
+        };
     }
 
     public NarrativeCondition GetCondition(CellController.NarrativeCellType type)
@@ -40,6 +41,6 @@ public class NarrativeRules
         if (narrativeConditions.ContainsKey(type))
             return narrativeConditions[type];
         else
-            return new NarrativeCondition(); // Default = no requirements
+            return new NarrativeCondition();
     }
 }

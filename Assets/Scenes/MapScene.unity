@@ -1039,11 +1039,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   currentPuzzleId: 
-  playerCurrency: 10
+  playerCurrency: 50
   collectedRelics: []
   totalTwosPlaced: 0
   narrativeTriggeredThisPuzzle: 0
   narrativeTypeTriggered: 0
+  currentNodeName: 
+  playerTileCollection: []
 --- !u!4 &1926539720
 Transform:
   m_ObjectHideFlags: 0

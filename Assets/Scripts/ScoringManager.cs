@@ -6,7 +6,6 @@ public class ScoringManager : MonoBehaviour
 
     public TileScoreBreakdown CalculateTileScore(int row, int col, TileData tile, int[,] playerGrid)
     {
-           
         TileScoreBreakdown breakdown = new TileScoreBreakdown();
 
         breakdown.basePoints = tile.number;
@@ -19,69 +18,36 @@ public class ScoringManager : MonoBehaviour
         breakdown.multiplier = CalculateCompletionMultiplier(row, col, playerGrid);
         subtotal = Mathf.RoundToInt(subtotal * breakdown.multiplier);
 
-        breakdown.tileEffectBonus = 0;
-        breakdown.relicBonus = 0;
-
-tile.row = row;
+        tile.row = row;
         tile.col = col;
+        RelicContext.grid = playerGrid;
 
-RelicContext.grid = playerGrid;
+        breakdown.tileEffectBonus = ProcessTileEffect(tile, subtotal, row, col, playerGrid, out int modifiedSubtotal);
+        subtotal = modifiedSubtotal;
 
-        if (tile.tileEffect == TileEffect.Booned)
+        breakdown.relicBonus = 0;
+        GameManager gm = FindFirstObjectByType<GameManager>();
+        
+        if (gm != null && gm.activeRelics != null)
         {
-            breakdown.tileEffectBonus += tile.scoreBonus;
-            subtotal += tile.scoreBonus;
-        }
-        else if (tile.tileEffect == TileEffect.Leaf)
-        {
-            float leafMultiplier = 2f;
-
-            GameManager gm = FindFirstObjectByType<GameManager>();
-            if (gm != null && gm.activeRelics != null)
+            foreach (var relic in gm.activeRelics)
             {
-
-
-                foreach (var relic in gm.activeRelics)
-                {
-                    if (relic is YakoCloverRelic)
-                    {
-                        Debug.Log("Yako’s Clover relic triggered! Using triple multiplier.");
-                        leafMultiplier = 3f;
-                        break;
-                    }
-                }
-            }
-
-            breakdown.tileEffectBonus = subtotal;
-            subtotal = Mathf.RoundToInt(subtotal * leafMultiplier);
-        }
-
-
-       
-        GameManager gm2 = FindFirstObjectByType<GameManager>();
-
-       
-        if (gm2 != null && gm2.activeRelics != null)
-        {
-            foreach (var relic in gm2.activeRelics)
-            {
-                
                 int newPoints = relic.ModifyScore(subtotal, tile);
-
+                
                 if (newPoints != subtotal)
                 {
                     breakdown.relicBonus += newPoints - subtotal;
                 }
-
+                
                 subtotal = newPoints;
             }
         }
 
         bool colComplete = IsColumnComplete(col, playerGrid);
-
-        if (colComplete && gm2 != null && gm2.activeRelics != null)
+        
+        if (colComplete && gm != null && gm.activeRelics != null)
         {
-            foreach (var relic in gm2.activeRelics)
+            foreach (var relic in gm.activeRelics)
             {
                 if (relic is BambooShuteRelic bambooRelic)
                 {
@@ -95,14 +61,118 @@ RelicContext.grid = playerGrid;
         breakdown.totalPoints = subtotal;
 
         Debug.Log(
-            $"Score breakdown for tile {tile.number}: " +
+            $"Score breakdown for tile {tile.number} ({tile.tileEffect}): " +
             $"Base={breakdown.basePoints}, Box={breakdown.boxSum}, Row={breakdown.rowSum}, Col={breakdown.colSum}, " +
             $"Multiplier={breakdown.multiplier}, TileEffectBonus={breakdown.tileEffectBonus}, RelicBonus={breakdown.relicBonus} → Total={breakdown.totalPoints}"
         );
 
         return breakdown;
     }
-    
+
+    private int ProcessTileEffect(TileData tile, int currentScore, int row, int col, int[,] grid, out int modifiedScore)
+    {
+        int bonus = 0;
+        modifiedScore = currentScore;
+
+        switch (tile.tileEffect)
+        {
+            case TileEffect.None:
+                break;
+
+            case TileEffect.Booned:
+                bonus = tile.scoreBonus;
+                modifiedScore += bonus;
+                Debug.Log($"✨ Booned tile: +{bonus} flat bonus");
+                break;
+
+            case TileEffect.Leaf:
+                float leafMultiplier = 2f;
+                
+                GameManager gm = FindFirstObjectByType<GameManager>();
+                if (gm != null && gm.activeRelics != null)
+                {
+                    foreach (var relic in gm.activeRelics)
+                    {
+                        if (relic is YakoCloverRelic)
+                        {
+                            Debug.Log("🍀 Yako's Clover relic triggered! Using triple multiplier.");
+                            leafMultiplier = 3f;
+                            break;
+                        }
+                    }
+                }
+                
+                bonus = currentScore;
+                modifiedScore = Mathf.RoundToInt(currentScore * leafMultiplier);
+                Debug.Log($"🍃 Leaf tile: {currentScore} × {leafMultiplier} = {modifiedScore}");
+                break;
+
+            case TileEffect.Flame:
+                int flameBonus = CalculateAdjacentBonus(row, col, grid);
+                bonus = flameBonus;
+                modifiedScore += flameBonus;
+                Debug.Log($"🔥 Flame tile: +{flameBonus} from adjacent tiles");
+                break;
+
+            case TileEffect.Baned:
+                int penalty = Mathf.RoundToInt(currentScore * 0.5f);
+                bonus = -penalty;
+                modifiedScore -= penalty;
+                Debug.Log($"💀 Baned tile: -{penalty} score penalty");
+                break;
+
+            case TileEffect.Lunar:
+                int rowSum = SumRow(row, grid);
+                bonus = rowSum * 2;
+                modifiedScore += bonus;
+                Debug.Log($"🌙 Lunar tile: Row sum {rowSum} × 2 = +{bonus}");
+                break;
+
+            case TileEffect.Solar:
+                int colSum = SumColumn(col, grid);
+                bonus = colSum * 2;
+                modifiedScore += bonus;
+                Debug.Log($"☀️ Solar tile: Col sum {colSum} × 2 = +{bonus}");
+                break;
+
+            case TileEffect.Portent:
+                bonus = 50;
+                modifiedScore += bonus;
+                Debug.Log($"🔮 Portent tile: +{bonus} bonus (future: free next tile)");
+                break;
+
+            case TileEffect.Wild:
+                bonus = 100;
+                modifiedScore += bonus;
+                Debug.Log($"🌟 Wild tile: +{bonus} flexibility bonus");
+                break;
+        }
+
+        return bonus;
+    }
+
+    private int CalculateAdjacentBonus(int row, int col, int[,] grid)
+    {
+        int bonus = 0;
+        int[] dr = { -1, 1, 0, 0 };
+        int[] dc = { 0, 0, -1, 1 };
+
+        for (int i = 0; i < 4; i++)
+        {
+            int newRow = row + dr[i];
+            int newCol = col + dc[i];
+
+            if (newRow >= 0 && newRow < 9 && newCol >= 0 && newCol < 9)
+            {
+                if (grid[newRow, newCol] != 0)
+                {
+                    bonus += Mathf.RoundToInt(grid[newRow, newCol] * 0.5f);
+                }
+            }
+        }
+
+        return bonus;
+    }
 
     private bool IsColumnComplete(int col, int[,] grid)
     {
@@ -162,7 +232,6 @@ RelicContext.grid = playerGrid;
         bool colComplete = true;
         bool boxComplete = true;
 
-        // Check row
         for (int c = 0; c < 9; c++)
         {
             if (grid[row, c] == 0)
@@ -172,7 +241,6 @@ RelicContext.grid = playerGrid;
             }
         }
 
-        // Check column
         for (int r = 0; r < 9; r++)
         {
             if (grid[r, col] == 0)
@@ -182,7 +250,6 @@ RelicContext.grid = playerGrid;
             }
         }
 
-        // Check 3×3 box
         int startRow = (row / 3) * 3;
         int startCol = (col / 3) * 3;
 

@@ -123,46 +123,71 @@ public class PuzzleManager : MonoBehaviour
 
     // ✅ New unified loader to handle grid + cellStates
     public void LoadPuzzle(PuzzleData puzzleData)
+    {
+        if (puzzleData.grid == null || puzzleData.grid.Count != 81)
+        {
+            Debug.LogError("❌ Invalid puzzle grid.");
+            return;
+        }
+
+        // Fill playerGrid
+        for (int row = 0; row < 9; row++)
+        {
+            for (int col = 0; col < 9; col++)
+            {
+                int index = row * 9 + col;
+                playerGrid[row, col] = puzzleData.grid[index];
+            }
+        }
+
+        // Populate cellStates from strings to enums
+        if (puzzleData.cellStates == null || puzzleData.cellStates.Count != 81)
+        {
+            Debug.LogWarning("⚠️ Missing or invalid cellStates. Defaulting to all Playable.");
+            cellStates = Enumerable.Repeat(CellState.Playable, 81).ToArray();
+        }
+        else
+        {
+            cellStates = puzzleData.cellStates.Select(s => Enum.Parse<CellState>(s)).ToArray();
+        }
+
+        // Populate blockedCells based on cellStates
+        blockedCells = new bool[9, 9];
+        for (int row = 0; row < 9; row++)
+        {
+            for (int col = 0; col < 9; col++)
+            {
+                int index = row * 9 + col;
+                blockedCells[row, col] = cellStates[index] == CellState.Blocked;
+            }
+        }
+
+        Debug.Log("✅ Puzzle loaded with grid, cellStates, and blockedCells.");
+    }
+public void DisableOtherNarrativeCells(CellController triggeredCell)
 {
-    if (puzzleData.grid == null || puzzleData.grid.Count != 81)
+    CellController[] allCells = FindObjectsByType<CellController>(FindObjectsSortMode.None);
+    
+    foreach (var cell in allCells)
     {
-        Debug.LogError("❌ Invalid puzzle grid.");
-        return;
-    }
-
-    // Fill playerGrid
-    for (int row = 0; row < 9; row++)
-    {
-        for (int col = 0; col < 9; col++)
+        if (cell != triggeredCell && 
+            cell.narrativeCellType != CellController.NarrativeCellType.None && 
+            !cell.narrativeTriggered)
         {
-            int index = row * 9 + col;
-            playerGrid[row, col] = puzzleData.grid[index];
+            cell.SetBlocked(true);
+            
+            var image = cell.GetComponent<UnityEngine.UI.Image>();
+            if (image != null)
+            {
+                Color fadedColor = image.color;
+                fadedColor.a = 0.3f;
+                image.color = fadedColor;
+            }
+            
+            Debug.Log($"🚫 Disabled narrative cell: {cell.narrativeCellType}");
         }
     }
-
-    // Populate cellStates from strings to enums
-    if (puzzleData.cellStates == null || puzzleData.cellStates.Count != 81)
-    {
-        Debug.LogWarning("⚠️ Missing or invalid cellStates. Defaulting to all Playable.");
-        cellStates = Enumerable.Repeat(CellState.Playable, 81).ToArray();
-    }
-    else
-    {
-        cellStates = puzzleData.cellStates.Select(s => Enum.Parse<CellState>(s)).ToArray();
-    }
-
-    // Populate blockedCells based on cellStates
-    blockedCells = new bool[9, 9];
-    for (int row = 0; row < 9; row++)
-    {
-        for (int col = 0; col < 9; col++)
-        {
-            int index = row * 9 + col;
-            blockedCells[row, col] = cellStates[index] == CellState.Blocked;
-        }
-    }
-
-    Debug.Log("✅ Puzzle loaded with grid, cellStates, and blockedCells.");
 }
+
 
 }

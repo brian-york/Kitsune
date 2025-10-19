@@ -10,8 +10,9 @@ public class PuzzleData
     public List<string> cellStates;
     public List<string> narrativeCellDescriptions;
     public List<NarrativeCellEntry> narrativeCells;
-
+    public List<NarrativeRequirement> narrativeRequirements;
 }
+
 [System.Serializable]
 public class NarrativeCellEntry
 {
@@ -19,4 +20,14 @@ public class NarrativeCellEntry
     public int col;
     public string narrativeCellType;
     public string description;
+}
+
+[System.Serializable]
+public class NarrativeRequirement
+{
+    public int row;
+    public int col;
+    public bool requiresSpecificTile;
+    public int requiredTileNumber;
+    public string requiredTileEffect;
 }

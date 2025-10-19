@@ -105,33 +105,44 @@ Debug.Log($"[CurrencyTrigger] Triggering Currency logic for cell [{row},{column}
 
 
 
-        if (narrativeCellType == NarrativeCellType.Currency && !narrativeTriggered)
+       if (narrativeCellType != NarrativeCellType.None && !narrativeTriggered && puzzleManager.IsValid(row, column))
 {
-    Debug.Log($"[💰 CurrencyCell] Triggered at [{row},{column}] — evaluating relics...");
+    switch (narrativeCellType)
+    {
+        case NarrativeCellType.Currency:
+            Debug.Log($"[💰 CurrencyCell] Triggered at [{row},{column}]");
+            
+            int currencyAmount = 1;
+            var relics = ProgressManager.Instance.collectedRelics;
+            
+            if (relics != null)
+            {
+                foreach (var relic in relics)
+                {
+                    relic.OnCurrencyGain(ref currencyAmount, this);
+                }
+            }
+            
+            ProgressManager.Instance.AddCurrency(currencyAmount);
+            
+            if (HarmonyManager.Instance != null)
+            {
+                HarmonyManager.Instance.AddHarmony(10, $"Currency cell at [{row},{column}]");
+            }
+            
+            UIManager ui = FindFirstObjectByType<UIManager>();
+            ui?.UpdateCurrencyDisplay(ProgressManager.Instance.TotalCurrency);
+            break;
+            
+        case NarrativeCellType.Shop:
+        case NarrativeCellType.Event:
+        case NarrativeCellType.Boss:
+        case NarrativeCellType.RelicReward:
+            Debug.Log($"[🎭 Narrative] {narrativeCellType} triggered at [{row},{column}]");
+            break;
+    }
     
-    int currencyAmount = 1;
-
-    var relics = ProgressManager.Instance.collectedRelics;
-    if (relics == null || relics.Count == 0)
-    {
-        Debug.LogWarning("[💔 CurrencyCell] No relics found in ProgressManager.");
-    }
-    else
-    {
-        foreach (var relic in relics)
-        {
-            Debug.Log($"[🔍 Relic Evaluation] Calling {relic.name}.OnCurrencyGain()...");
-            relic.OnCurrencyGain(ref currencyAmount, this);
-        }
-    }
-
-    Debug.Log($"[💰 Final Currency Amount] Gained = {currencyAmount}");
-    ProgressManager.Instance.AddCurrency(currencyAmount);
-
-    UIManager ui = FindFirstObjectByType<UIManager>();
-    ui?.UpdateCurrencyDisplay(ProgressManager.Instance.TotalCurrency);
-
-    narrativeTriggered = true;
+    TriggerNarrative();
 }
 
         
@@ -222,12 +233,12 @@ Debug.Log($"[CurrencyTrigger] Triggering Currency logic for cell [{row},{column}
     
 }*/
 
-public void SetNarrativeCellColor()
-{
-    if (narrativeCellType == NarrativeCellType.None)
-        return;
+    public void SetNarrativeCellColor()
+    {
+        if (narrativeCellType == NarrativeCellType.None)
+            return;
 
-    Color cellColor = Color.white;
+        Color cellColor = Color.white;
 
         switch (narrativeCellType)
         {
@@ -244,18 +255,18 @@ public void SetNarrativeCellColor()
                 cellColor = KitsuneColors.RelicRewardCell;
                 break;
             case NarrativeCellType.Currency:
-            cellColor = KitsuneColors.CurrencyCell;
-            break;
-    }
+                cellColor = KitsuneColors.CurrencyCell;
+                break;
+        }
 
-    GetComponent<Image>().color = cellColor;
-    
-    if (currencyOverlay != null)
-    {
-        currencyOverlay.SetActive(narrativeCellType == NarrativeCellType.Currency);
-    }
+        GetComponent<Image>().color = cellColor;
 
-    if (inputField != null)
+        if (currencyOverlay != null)
+        {
+            currencyOverlay.SetActive(narrativeCellType == NarrativeCellType.Currency);
+        }
+
+        if (inputField != null)
         {
             var colors = inputField.colors;
             colors.normalColor = cellColor;
@@ -263,7 +274,25 @@ public void SetNarrativeCellColor()
 
             Debug.Log($"[SetNarrativeCellColor] Assigned color {cellColor} to cell [{row},{column}] via ColorBlock.");
         }
+    }
+public void TriggerNarrative()
+{
+    if (narrativeTriggered || narrativeCellType == NarrativeCellType.None)
+        return;
+
+    narrativeTriggered = true;
+    
+    ProgressManager.Instance.SetNarrativeTrigger(narrativeCellType);
+    
+    PuzzleManager puzzleManager = FindFirstObjectByType<PuzzleManager>();
+    if (puzzleManager != null)
+    {
+        puzzleManager.DisableOtherNarrativeCells(this);
+    }
+    
+    Debug.Log($"🎭 Narrative triggered: {narrativeCellType} at [{row},{column}]");
 }
+
 
 
    /*public void OnPointerEnter(PointerEventData eventData)
