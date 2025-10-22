@@ -2,13 +2,14 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using System.Collections;
+using System.Collections.Generic;
 
-
-public class CellController : MonoBehaviour
+public class CellController : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     private TMP_InputField inputField;
-    private int row;
-    private int column;
+    public int row;
+    public int column;
 
     public string cellState = "Playable";
     public string narrativeDescription;
@@ -16,7 +17,7 @@ public class CellController : MonoBehaviour
 
     public bool isBlocked = false;
     public bool narrativeTriggered = false;
-    public bool locked = false; // Marks pre-filled cells as non-interactable but not blocked
+    public bool locked = false;
 
     public NarrativeCondition narrativeCondition;
     public enum NarrativeCellType
@@ -29,10 +30,12 @@ public class CellController : MonoBehaviour
         Currency
     }
 
-[SerializeField] private GameObject currencyOverlay;
-
+    [SerializeField] private GameObject currencyOverlay;
 
     public NarrativeCellType narrativeCellType = NarrativeCellType.None;
+    
+    private Color originalColor;
+    private bool isHovering = false;
 
     void Awake()
     {
@@ -41,7 +44,6 @@ public class CellController : MonoBehaviour
         inputField.onValueChanged.AddListener(OnCellValueChanged);
         inputField.readOnly = true;
 
-        // Find the PuzzleManager in the scene
         puzzleManager = FindFirstObjectByType<PuzzleManager>();
     }
 
@@ -53,12 +55,12 @@ public class CellController : MonoBehaviour
 
     void OnCellValueChanged(string text)
     {
-
         Debug.Log($"[CurrencyCheck] Cell [{row},{column}] Type: {narrativeCellType}, Triggered: {narrativeTriggered}");
 
         if (isBlocked)
             return;
-Debug.Log($"[CurrencyTrigger] Triggering Currency logic for cell [{row},{column}].");
+        
+        Debug.Log($"[CurrencyTrigger] Triggering Currency logic for cell [{row},{column}].");
 
         int value = 0;
 
@@ -91,6 +93,7 @@ Debug.Log($"[CurrencyTrigger] Triggering Currency logic for cell [{row},{column}
             {
                 Debug.Log($"[OnCellValueChanged] Cell [{row},{column}] setting color to WHITE.");
                 inputField.image.color = Color.white;
+                originalColor = Color.white;
             }
             else
             {
@@ -101,236 +104,285 @@ Debug.Log($"[CurrencyTrigger] Triggering Currency logic for cell [{row},{column}
         {
             Debug.Log($"[OnCellValueChanged] Cell [{row},{column}] setting color to RED.");
             inputField.image.color = Color.red;
+            originalColor = Color.red;
+            
+            HighlightConflictingCells(value);
         }
 
+        if (narrativeCellType != NarrativeCellType.None && !narrativeTriggered && puzzleManager.IsValid(row, column))
+        {
+            switch (narrativeCellType)
+            {
+                case NarrativeCellType.Currency:
+                    Debug.Log($"[💰 CurrencyCell] Triggered at [{row},{column}]");
+                    
+                    int currencyAmount = 1;
+                    var relics = ProgressManager.Instance.collectedRelics;
+                    
+                    if (relics != null)
+                    {
+                        foreach (var relic in relics)
+                        {
+                            relic.OnCurrencyGain(ref currencyAmount, this);
+                        }
+                    }
+                    
+                    ProgressManager.Instance.AddCurrency(currencyAmount);
+                    
+                    UIManager ui = FindFirstObjectByType<UIManager>();
+                    ui?.UpdateCurrencyDisplay(ProgressManager.Instance.TotalCurrency);
+                    break;
+                    
+                case NarrativeCellType.Shop:
+                case NarrativeCellType.Event:
+                case NarrativeCellType.Boss:
+                case NarrativeCellType.RelicReward:
+                    Debug.Log($"[🎭 Narrative] {narrativeCellType} triggered at [{row},{column}]");
+                    break;
+            }
+            
+            TriggerNarrative();
+        }
+    }
 
+    void HighlightConflictingCells(int value)
+    {
+        if (value == 0 || puzzleManager == null) return;
 
-       if (narrativeCellType != NarrativeCellType.None && !narrativeTriggered && puzzleManager.IsValid(row, column))
+        List<Vector2Int> conflictingCells = new List<Vector2Int>();
+
+        for (int c = 0; c < 9; c++)
+        {
+            if (c != column && 
+                puzzleManager.playerGrid[row, c] == value && 
+                puzzleManager.cellStates[row * 9 + c] != CellState.Blocked)
+            {
+                conflictingCells.Add(new Vector2Int(row, c));
+            }
+        }
+
+        for (int r = 0; r < 9; r++)
+        {
+            if (r != row && 
+                puzzleManager.playerGrid[r, column] == value && 
+                puzzleManager.cellStates[r * 9 + column] != CellState.Blocked)
+            {
+                conflictingCells.Add(new Vector2Int(r, column));
+            }
+        }
+
+        int boxRowStart = (row / 3) * 3;
+        int boxColStart = (column / 3) * 3;
+
+        for (int r = boxRowStart; r < boxRowStart + 3; r++)
+        {
+            for (int c = boxColStart; c < boxColStart + 3; c++)
+            {
+                if ((r != row || c != column) &&
+                    puzzleManager.playerGrid[r, c] == value &&
+                    puzzleManager.cellStates[r * 9 + c] != CellState.Blocked)
+                {
+                    conflictingCells.Add(new Vector2Int(r, c));
+                }
+            }
+        }
+
+        CellController[] allCells = FindObjectsByType<CellController>(FindObjectsSortMode.None);
+        foreach (var cell in allCells)
+        {
+            foreach (var conflict in conflictingCells)
+            {
+                if (cell.row == conflict.x && cell.column == conflict.y)
+                {
+                    cell.FlashConflict();
+                }
+            }
+        }
+    }
+
+    public void FlashConflict()
+    {
+        StartCoroutine(FlashConflictCoroutine());
+    }
+
+    IEnumerator FlashConflictCoroutine()
+    {
+        Color flashColor = new Color(1f, 0.6f, 0f, 1f);
+        Image img = inputField.image;
+        Color startColor = img.color;
+        
+        float flashDuration = 0.3f;
+        float elapsed = 0f;
+
+        while (elapsed < flashDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / flashDuration;
+            img.color = Color.Lerp(flashColor, startColor, t);
+            yield return null;
+        }
+
+        img.color = startColor;
+    }
+
+    public void SetValue(int value, bool locked)
+    {
+        this.locked = locked;
+
+        if (value > 0)
+        {
+            inputField.SetTextWithoutNotify(value.ToString());
+            inputField.interactable = false;
+            inputField.image.color = new Color(0.95f, 0.92f, 0.88f);
+            originalColor = new Color(0.95f, 0.92f, 0.88f);
+        }
+        else
+        {
+            inputField.text = "";
+            inputField.interactable = true;
+            originalColor = Color.white;
+        }
+
+        var textComponent = inputField.transform.Find("Text Area/Text")?.GetComponent<TextMeshProUGUI>();
+        if (textComponent != null)
+        {
+            textComponent.color = KitsuneColors.DriedInkBrown;
+        }
+
+        if (narrativeCellType != NarrativeCellType.None)
+        {
+            Debug.Log($"[SetValue] Re-applying narrative color for cell [{row},{column}]");
+            SetNarrativeCellColor();
+        }
+
+        Debug.Log($"[SetValue] Cell [{row},{column}] => value: {value}, locked: {locked}, interactable: {inputField.interactable}");
+    }
+
+   public void SetBlocked(bool blocked)
 {
+    isBlocked = blocked;
+    locked = blocked;
+
+    var textComponent = inputField.transform.Find("Text Area/Text")?.GetComponent<TextMeshProUGUI>();
+
+    if (inputField != null)
+    {
+        if (blocked)
+        {
+            inputField.image.color = Color.black;
+            originalColor = Color.black;
+            inputField.interactable = false;
+            inputField.text = "";
+
+            if (textComponent != null)
+                textComponent.text = "";
+            
+            Debug.Log($"🚫 Cell [{row},{column}] is now BLOCKED (black, non-interactable)");
+        }
+        else
+        {
+            inputField.image.color = Color.white;
+            originalColor = Color.white;
+            inputField.interactable = true;
+        }
+    }
+}
+
+
+  void TriggerNarrative()
+{
+    narrativeTriggered = true;
+
+    GameManager gameManager = FindFirstObjectByType<GameManager>();
+    if (gameManager != null)
+    {
+        gameManager.lastTriggeredNarrative = narrativeDescription;
+        gameManager.lastTriggeredCellType = narrativeCellType;
+    }
+
     switch (narrativeCellType)
     {
         case NarrativeCellType.Currency:
-            Debug.Log($"[💰 CurrencyCell] Triggered at [{row},{column}]");
-            
-            int currencyAmount = 1;
-            var relics = ProgressManager.Instance.collectedRelics;
-            
-            if (relics != null)
-            {
-                foreach (var relic in relics)
-                {
-                    relic.OnCurrencyGain(ref currencyAmount, this);
-                }
-            }
-            
-            ProgressManager.Instance.AddCurrency(currencyAmount);
-            
-            if (HarmonyManager.Instance != null)
-            {
-                HarmonyManager.Instance.AddHarmony(10, $"Currency cell at [{row},{column}]");
-            }
-            
-            UIManager ui = FindFirstObjectByType<UIManager>();
-            ui?.UpdateCurrencyDisplay(ProgressManager.Instance.TotalCurrency);
+            Debug.Log($"💰 Currency narrative triggered at [{row},{column}]");
             break;
             
-        case NarrativeCellType.Shop:
-        case NarrativeCellType.Event:
-        case NarrativeCellType.Boss:
         case NarrativeCellType.RelicReward:
-            Debug.Log($"[🎭 Narrative] {narrativeCellType} triggered at [{row},{column}]");
+            Debug.Log($"🔮 Relic reward narrative triggered at [{row},{column}]");
+            break;
+
+        default:
+            Debug.Log($"🎭 Triggered narrative: {narrativeDescription}");
             break;
     }
-    
-    TriggerNarrative();
-}
 
-        
-
+    puzzleManager.DisableOtherNarrativeCells(this);
 }
 
 
-    public void SetValue(int value, bool locked)
+   public void SetNarrativeCellColor()
 {
-    this.locked = locked;  // Track the locked state
+    Color cellColor = Color.white;
 
-    if (value > 0)
+    switch (narrativeCellType)
     {
-        inputField.SetTextWithoutNotify(value.ToString());
-
-        // Force disable interaction for pre-filled values
-        inputField.interactable = false;
-
-        // Optional: make it visually clearer it's not editable
-        inputField.image.color = new Color(0.95f, 0.92f, 0.88f); // Light paper tone
-    }
-    else
-    {
-        inputField.text = "";
-        inputField.interactable = true; // Empty cells are interactable
-    }
-
-    var textComponent = inputField.transform.Find("Text Area/Text")?.GetComponent<TextMeshProUGUI>();
-    if (textComponent != null)
-    {
-        textComponent.color = KitsuneColors.DriedInkBrown;
+        case NarrativeCellType.Shop:
+            cellColor = new Color(0.2f, 0.6f, 0.8f);
+            break;
+        case NarrativeCellType.Event:
+            cellColor = new Color(0.9f, 0.7f, 0.2f);
+            break;
+        case NarrativeCellType.Boss:
+            cellColor = new Color(0.7f, 0.1f, 0.1f);
+            break;
+        case NarrativeCellType.RelicReward:
+            cellColor = new Color(0.5f, 0.2f, 0.7f);
+            break;
+        case NarrativeCellType.Currency:
+            cellColor = new Color(0.1f, 0.7f, 0.3f);
+            break;
     }
 
-    if (narrativeCellType != NarrativeCellType.None)
-    {
-        Debug.Log($"[SetValue] Re-applying narrative color for cell [{row},{column}]");
-        SetNarrativeCellColor();
-    }
+    ColorBlock colorBlock = inputField.colors;
+    colorBlock.normalColor = cellColor;
+    colorBlock.highlightedColor = cellColor * 1.3f;
+    colorBlock.pressedColor = cellColor * 0.8f;
+    colorBlock.selectedColor = cellColor;
+    colorBlock.disabledColor = cellColor * 0.5f;
+    inputField.colors = colorBlock;
 
-    Debug.Log($"[SetValue] Cell [{row},{column}] => value: {value}, locked: {locked}, interactable: {inputField.interactable}");
+    inputField.image.color = cellColor;
+    originalColor = cellColor;
+
+    Debug.Log($"[SetNarrativeCellColor] Assigned color {cellColor} to cell [{row},{column}] via ColorBlock.");
 }
 
-    public void SetBlocked(bool blocked)
+    public void OnPointerEnter(PointerEventData eventData)
     {
-        isBlocked = blocked;
+        if (isBlocked || locked || !inputField.interactable) return;
 
-        var textComponent = inputField.transform.Find("Text Area/Text")?.GetComponent<TextMeshProUGUI>();
-
-        if (inputField != null)
-        {
-            if (blocked)
-            {
-                inputField.image.color = Color.black;
-                inputField.interactable = false;
-                inputField.text = "";
-
-                if (textComponent != null)
-                    textComponent.color = Color.white;
-            }
-            else
-            {
-                inputField.image.color = Color.white;
-                inputField.interactable = true;
-
-                if (textComponent != null)
-                    textComponent.color = KitsuneColors.DriedInkBrown;
-            }
-        }
-    }
-
-    public void SetInteractable(bool state)
-    {
-        if (!isBlocked)
-        {
-            inputField.interactable = state;
-        }
-    }
-
-    /*public void SetNarrative(bool isNarrative)
-    {
+        isHovering = true;
         
-        if (inputField != null)
-        {
-            inputField.image.color = isNarrative
-                ? KitsuneColors.AonibiBlue
-                : Color.white;
-        }
-    
-}*/
+        Color hoverColor = new Color(0.4f, 0.8f, 1f, 1f);
+        inputField.image.color = hoverColor;
 
-    public void SetNarrativeCellColor()
-    {
-        if (narrativeCellType == NarrativeCellType.None)
-            return;
-
-        Color cellColor = Color.white;
-
-        switch (narrativeCellType)
-        {
-            case NarrativeCellType.Shop:
-                cellColor = KitsuneColors.ShopCell;
-                break;
-            case NarrativeCellType.Event:
-                cellColor = KitsuneColors.EventCell;
-                break;
-            case NarrativeCellType.Boss:
-                cellColor = KitsuneColors.BossCell;
-                break;
-            case NarrativeCellType.RelicReward:
-                cellColor = KitsuneColors.RelicRewardCell;
-                break;
-            case NarrativeCellType.Currency:
-                cellColor = KitsuneColors.CurrencyCell;
-                break;
-        }
-
-        GetComponent<Image>().color = cellColor;
-
-        if (currencyOverlay != null)
-        {
-            currencyOverlay.SetActive(narrativeCellType == NarrativeCellType.Currency);
-        }
-
-        if (inputField != null)
-        {
-            var colors = inputField.colors;
-            colors.normalColor = cellColor;
-            inputField.colors = colors;
-
-            Debug.Log($"[SetNarrativeCellColor] Assigned color {cellColor} to cell [{row},{column}] via ColorBlock.");
-        }
-    }
-public void TriggerNarrative()
-{
-    if (narrativeTriggered || narrativeCellType == NarrativeCellType.None)
-        return;
-
-    narrativeTriggered = true;
-    
-    ProgressManager.Instance.SetNarrativeTrigger(narrativeCellType);
-    
-    PuzzleManager puzzleManager = FindFirstObjectByType<PuzzleManager>();
-    if (puzzleManager != null)
-    {
-        puzzleManager.DisableOtherNarrativeCells(this);
-    }
-    
-    Debug.Log($"🎭 Narrative triggered: {narrativeCellType} at [{row},{column}]");
-}
-
-
-
-   /*public void OnPointerEnter(PointerEventData eventData)
-    {
         UIManager ui = FindFirstObjectByType<UIManager>();
-
-        Debug.Log($"[ENTER] Cell [{row},{column}] narrativeDescription: {narrativeDescription}");
-
         if (ui != null && !string.IsNullOrEmpty(narrativeDescription))
         {
-            if (ui.currentlyHoveredCell != this)
-            {
-                Debug.Log("[ENTER] Showing tooltip.");
-                ui.currentlyHoveredCell = this;
-                ui.ShowNarrativeTooltip(narrativeDescription, Input.mousePosition);
-            }
-            else
-            {
-                Debug.Log("[ENTER] Skipped show, already hovering this cell.");
-            }
+            ui.ShowNarrativeTooltip(narrativeDescription, Input.mousePosition);
         }
     }
 
-   public void OnPointerExit(PointerEventData eventData)
-{
-    UIManager ui = FindFirstObjectByType<UIManager>();
-
-    Debug.Log($"[EXIT] Cell [{row},{column}] narrativeDescription: {narrativeDescription}");
-
-    if (ui != null && ui.currentlyHoveredCell == this)
+    public void OnPointerExit(PointerEventData eventData)
     {
-        Debug.Log("[EXIT] Hiding tooltip.");
-        ui.currentlyHoveredCell = null;
-        ui.HideNarrativeTooltip();
+        if (isBlocked || locked) return;
+
+        isHovering = false;
+        inputField.image.color = originalColor;
+
+        UIManager ui = FindFirstObjectByType<UIManager>();
+        if (ui != null && !string.IsNullOrEmpty(narrativeDescription))
+        {
+            ui.HideNarrativeTooltip();
+        }
     }
-    else
-    {
-        Debug.Log("[EXIT] No action taken on exit.");
-    }
-}*/
 }

@@ -9,8 +9,8 @@ public class HarmonyMeterUI : MonoBehaviour
     public Image glowImage;
 
     [Header("Settings")]
-    public int minHarmony = -100;
-    public int maxHarmony = 100;
+    public int minHarmony = -10;
+    public int maxHarmony = 10;
     public Color yinGlowColor = new Color(0.3f, 0.1f, 0.5f, 0.8f);
     public Color yangGlowColor = new Color(1f, 0.7f, 0.3f, 0.8f);
     public Color neutralGlowColor = new Color(1f, 1f, 1f, 0.3f);

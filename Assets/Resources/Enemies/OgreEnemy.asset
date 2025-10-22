@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e89762141d1d49a48a5bc879f39bbc50, type: 3}
+  m_Name: OgreEnemy
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyData
+  enemyName: Ogre
+  enemySprite: {fileID: 0}
+  flavorText: A brute that has a short temper and begins breaking things the more
+    he loses.
+  maxHP: 200
+  startingBlockedCells: 3
+  ability:
+    abilityName: SMASH!
+    description: Every 5 placements, 1 random cell is blocked.
+    trigger: 3
+    triggerEveryNTurns: 5
+    requiredTileNumber: 0
+    requiredTileEffect: 0
+    harmonyThreshold: 0
+    cellsFilledThreshold: 0
+    checkTileNumberLessThan: 0
+    effect: 0
+    effectValue: 1
+  baseMonReward: 30

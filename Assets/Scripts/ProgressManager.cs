@@ -39,39 +39,66 @@ public class ProgressManager : MonoBehaviour
             Destroy(gameObject);
         }
     }
-
-    private void InitializeStartingCollection()
+private void InitializeStartingCollection()
+{
+    Debug.Log("🎴 Creating starting tile collection...");
+    
+    int startingTileCount = 40;
+    
+    for (int i = 0; i < startingTileCount; i++)
     {
-        Debug.Log("🎴 Creating starting tile collection...");
+        int number = Random.Range(1, 10);
+        TileEffect effect = TileEffect.None;
         
-        int startingTileCount = 30;
-        
-        for (int i = 0; i < startingTileCount; i++)
+        if (i < 20)
         {
-            int number = Random.Range(1, 10);
-            TileEffect effect = TileEffect.None;
-            
-            if (i >= 25)
-            {
-                effect = Random.value > 0.5f ? TileEffect.Booned : TileEffect.Leaf;
-            }
-            
-            Color color = GetColorForEffect(effect);
-            int bonus = effect == TileEffect.Booned ? Random.Range(10, 20) : 0;
-            
-            playerTileCollection.Add(new TileData(
-                number,
-                color,
-                effect,
-                bonus,
-                false,
-                ""
-            ));
+            effect = TileEffect.None;
+        }
+        else if (i < 25)
+        {
+            effect = TileEffect.Booned;
+        }
+        else if (i < 28)
+        {
+            effect = TileEffect.Flame;
+        }
+        else if (i < 31)
+        {
+            effect = TileEffect.Solar;
+        }
+        else if (i < 34)
+        {
+            effect = TileEffect.Lunar;
+        }
+        else if (i < 36)
+        {
+            effect = TileEffect.Baned;
+        }
+        else if (i < 38)
+        {
+            effect = TileEffect.Portent;
+        }
+        else
+        {
+            effect = TileEffect.Leaf;
         }
         
-        Debug.Log($"✅ Starting collection created with {playerTileCollection.Count} tiles");
-        LogCollectionDistribution();
+        Color color = GetColorForEffect(effect);
+        int bonus = effect == TileEffect.Booned ? Random.Range(10, 20) : 0;
+        
+        playerTileCollection.Add(new TileData(
+            number,
+            color,
+            effect,
+            bonus,
+            false,
+            ""
+        ));
     }
+    
+    Debug.Log($"✅ Starting collection created with {playerTileCollection.Count} tiles");
+    LogCollectionDistribution();
+}
 
     public void AddTileToCollection(TileData newTile)
     {

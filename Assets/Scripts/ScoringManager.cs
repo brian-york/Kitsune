@@ -70,86 +70,11 @@ public class ScoringManager : MonoBehaviour
     }
 
     private int ProcessTileEffect(TileData tile, int currentScore, int row, int col, int[,] grid, out int modifiedScore)
-    {
-        int bonus = 0;
-        modifiedScore = currentScore;
+{
+    modifiedScore = currentScore;
+    return 0;
+}
 
-        switch (tile.tileEffect)
-        {
-            case TileEffect.None:
-                break;
-
-            case TileEffect.Booned:
-                bonus = tile.scoreBonus;
-                modifiedScore += bonus;
-                Debug.Log($"✨ Booned tile: +{bonus} flat bonus");
-                break;
-
-            case TileEffect.Leaf:
-                float leafMultiplier = 2f;
-                
-                GameManager gm = FindFirstObjectByType<GameManager>();
-                if (gm != null && gm.activeRelics != null)
-                {
-                    foreach (var relic in gm.activeRelics)
-                    {
-                        if (relic is YakoCloverRelic)
-                        {
-                            Debug.Log("🍀 Yako's Clover relic triggered! Using triple multiplier.");
-                            leafMultiplier = 3f;
-                            break;
-                        }
-                    }
-                }
-                
-                bonus = currentScore;
-                modifiedScore = Mathf.RoundToInt(currentScore * leafMultiplier);
-                Debug.Log($"🍃 Leaf tile: {currentScore} × {leafMultiplier} = {modifiedScore}");
-                break;
-
-            case TileEffect.Flame:
-                int flameBonus = CalculateAdjacentBonus(row, col, grid);
-                bonus = flameBonus;
-                modifiedScore += flameBonus;
-                Debug.Log($"🔥 Flame tile: +{flameBonus} from adjacent tiles");
-                break;
-
-            case TileEffect.Baned:
-                int penalty = Mathf.RoundToInt(currentScore * 0.5f);
-                bonus = -penalty;
-                modifiedScore -= penalty;
-                Debug.Log($"💀 Baned tile: -{penalty} score penalty");
-                break;
-
-            case TileEffect.Lunar:
-                int rowSum = SumRow(row, grid);
-                bonus = rowSum * 2;
-                modifiedScore += bonus;
-                Debug.Log($"🌙 Lunar tile: Row sum {rowSum} × 2 = +{bonus}");
-                break;
-
-            case TileEffect.Solar:
-                int colSum = SumColumn(col, grid);
-                bonus = colSum * 2;
-                modifiedScore += bonus;
-                Debug.Log($"☀️ Solar tile: Col sum {colSum} × 2 = +{bonus}");
-                break;
-
-            case TileEffect.Portent:
-                bonus = 50;
-                modifiedScore += bonus;
-                Debug.Log($"🔮 Portent tile: +{bonus} bonus (future: free next tile)");
-                break;
-
-            case TileEffect.Wild:
-                bonus = 100;
-                modifiedScore += bonus;
-                Debug.Log($"🌟 Wild tile: +{bonus} flexibility bonus");
-                break;
-        }
-
-        return bonus;
-    }
 
     private int CalculateAdjacentBonus(int row, int col, int[,] grid)
     {

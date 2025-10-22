@@ -6,6 +6,8 @@ public class HarmonyManager : MonoBehaviour
 
     [Header("Harmony Settings")]
     public int currentHarmony = 0;
+    public int minHarmony = -10;
+    public int maxHarmony = 10;
 
     [Header("Optional UI")]
     public TMPro.TextMeshProUGUI harmonyDisplayText;
@@ -32,13 +34,15 @@ public class HarmonyManager : MonoBehaviour
     public void AddHarmony(int amount, string reason = "")
     {
         currentHarmony += amount;
+        currentHarmony = Mathf.Clamp(currentHarmony, minHarmony, maxHarmony);
+        
         Debug.Log($"⚖️ Harmony changed by {amount:+#;-#;0} → Now: {currentHarmony} (Reason: {reason})");
         UpdateHarmonyDisplay();
     }
 
     public void SetHarmony(int value)
     {
-        currentHarmony = value;
+        currentHarmony = Mathf.Clamp(value, minHarmony, maxHarmony);
         UpdateHarmonyDisplay();
     }
 

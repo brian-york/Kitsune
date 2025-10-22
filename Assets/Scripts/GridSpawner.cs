@@ -116,29 +116,46 @@ public class GridSpawner : MonoBehaviour
         else Debug.LogError("TileDragHandler missing from tileButton prefab!");
     }
 
-    public void RefillTileHand()
+   public void RefillTileHand()
+{
+    int baseTileCount = 3;
+    int bonusTiles = 0;
+    
+    if (CharacterManager.Instance != null)
     {
-        int currentTiles = tilePoolTransform.childCount;
-        while (currentTiles < 3)
+        bonusTiles = CharacterManager.Instance.GetPassiveValue(PassiveAbilityType.ExtraTilesPerDraw);
+    }
+    
+    int targetTileCount = baseTileCount + bonusTiles;
+    
+    int currentTiles = tilePoolTransform.childCount;
+    
+    while (currentTiles < targetTileCount)
+    {
+        TileData newTile = poolManager.DrawTile();
+        if (newTile != null)
         {
-            TileData newTile = poolManager.DrawTile();
-            if (newTile != null)
+            CreateTile(newTile);
+            currentTiles++;
+        }
+        else
+        {
+            Debug.Log("Tile pool is empty — cannot refill hand further.");
+            if (currentTiles == 0)
             {
-                CreateTile(newTile);
-                currentTiles++;
+                GameManager gm = FindFirstObjectByType<GameManager>();
+                gm?.TriggerGameOver();
             }
-            else
-            {
-                Debug.Log("Tile pool is empty — cannot refill hand further.");
-                if (currentTiles == 0)
-                {
-                    GameManager gm = FindFirstObjectByType<GameManager>();
-                    gm?.TriggerGameOver();
-                }
-                break;
-            }
+            break;
         }
     }
+    
+    if (bonusTiles > 0)
+    {
+        Debug.Log($"🎴 Hand refilled to {currentTiles} tiles (base: {baseTileCount}, bonus: {bonusTiles})");
+    }
+}
+
 
     void GenerateGrid(int[,] puzzle, string[,] cellStates, string[,] narrativeDescriptions, PuzzleData puzzleData)
     {

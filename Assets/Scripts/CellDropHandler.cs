@@ -16,39 +16,31 @@ public class CellDropHandler : MonoBehaviour, IDropHandler
         ScoreManager scoreManager = FindFirstObjectByType<ScoreManager>();
         GameManager gm = FindFirstObjectByType<GameManager>();
 
-        if (!ValidateBasicDrop(tile, cellController, puzzleManager))
+        bool isValidPlacement = ValidateBasicDrop(tile, cellController, puzzleManager);
+        
+        if (isValidPlacement)
         {
-            DestroyTileAndRefill(tile);
-            return;
+            ProcessNarrativeTriggers(tile, cellController, scoreManager, gm);
+            UpdatePuzzleState(tile, cellController, puzzleManager);
+             if (TileEffectHandler.Instance != null)
+    {
+        TileEffectHandler.Instance.ProcessOnPlacementEffect(tile.tileData, row, col);
+    }
+            CalculateAndAwardScore(tile, puzzleManager, scoreManager, gm);
+            
+            RegionTracker.Instance?.CheckRegionCompletion(row, col);
+            
+            EnemyManager.Instance?.OnTilePlaced(tile.tileData, true);
         }
-
-        ProcessNarrativeTriggers(tile, cellController, scoreManager, gm);
-
-        UpdatePuzzleState(tile, cellController, puzzleManager);
-
-        CalculateAndAwardScore(tile, puzzleManager, scoreManager, gm);
-
+        else
+        {
+            EnemyManager.Instance?.OnTilePlaced(tile.tileData, false);
+        }
+        
         DestroyTileAndRefill(tile);
     }
 
-    private bool ValidateBasicDrop(TileDragHandler tile, CellController cellController, PuzzleManager puzzleManager)
-    {
-        if (cellController != null && cellController.locked)
-        {
-            Debug.Log($"Cell [{row},{col}] is locked. Rejecting drop.");
-            return false;
-        }
-
-        Debug.Log($"Tile dropped on cell [{row},{col}] with value {tile.tileValue}");
-
-        if (puzzleManager != null && !puzzleManager.IsValid(row, col, tile.tileValue))
-        {
-            Debug.Log("❌ Invalid placement. Tile destroyed, no score given.");
-            return false;
-        }
-
-        return true;
-    }
+ 
 
     private void ProcessNarrativeTriggers(TileDragHandler tile, CellController cellController, ScoreManager scoreManager, GameManager gm)
     {
@@ -84,6 +76,25 @@ public class CellDropHandler : MonoBehaviour, IDropHandler
         cellController.narrativeTriggered = true;
     }
 
+      private bool ValidateBasicDrop(TileDragHandler tile, CellController cellController, PuzzleManager puzzleManager)
+    {
+        if (cellController != null && cellController.locked)
+        {
+            Debug.Log($"Cell [{row},{col}] is locked. Rejecting drop.");
+            return false;
+        }
+
+        Debug.Log($"Tile dropped on cell [{row},{col}] with value {tile.tileValue}");
+
+        if (puzzleManager != null && !puzzleManager.IsValid(row, col, tile.tileValue))
+        {
+            Debug.Log("❌ Invalid placement. Tile destroyed, no score given.");
+            return false;
+        }
+
+        return true;
+    }
+
    private bool ValidateNarrativeCondition(TileDragHandler tile, CellController cellController)
 {
     if (cellController.narrativeCondition == null) return true;
@@ -110,7 +121,6 @@ public class CellDropHandler : MonoBehaviour, IDropHandler
     return true;
 }
 
-
     private void ProcessCurrencyCell(CellController cellController, ScoreManager scoreManager)
     {
         Debug.Log($"💰 [CurrencyCell] Triggered at [{row},{col}]");
@@ -129,16 +139,6 @@ public class CellDropHandler : MonoBehaviour, IDropHandler
 
         ProgressManager.Instance?.AddCurrency(currencyAmount);
         Debug.Log($"💰 Currency awarded: {currencyAmount}");
-
-        if (HarmonyManager.Instance != null)
-        {
-            HarmonyManager.Instance.AddHarmony(10, $"Currency cell at [{row},{col}]");
-            Debug.Log($"⚖️ Harmony awarded: +10");
-        }
-        else
-        {
-            Debug.LogWarning("⚠️ HarmonyManager not found in scene.");
-        }
 
         if (scoreManager != null)
         {
@@ -180,7 +180,6 @@ public class CellDropHandler : MonoBehaviour, IDropHandler
             scoreManager.ShowPopupDelayed(breakdown.relicBonus, "Relic Bonus", cellWorldPos + new Vector3(0, 100, 0), delay += 0.5f);
 
         scoreManager.AddScore(breakdown.totalPoints);
-        gm?.CheckForLevelComplete(scoreManager.currentScore);
     }
 
     private void DestroyTileAndRefill(TileDragHandler tile)
