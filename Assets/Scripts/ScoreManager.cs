@@ -91,10 +91,50 @@ public class ScoreManager : MonoBehaviour
     }
 
     public void ShowCurrencyPopup(int amount, Vector3 position)
+    {
+        string label = "mon";
+        ShowPopup(amount, label, position);
+    }
+
+public void ShowDamagePopup(int damage, Vector3 worldPos, bool isBonusDamage = false)
 {
-    string label = "mon";
-    ShowPopup(amount, label, position);
+    Debug.Log($"🎬 ShowDamagePopup called | Damage: {damage} | WorldPos: {worldPos} | IsBonus: {isBonusDamage}");
+    
+    if (popupScorePrefab == null || popupCanvasLayer == null)
+    {
+        Debug.LogError($"❌ Popup prefab or canvas layer missing! Prefab: {popupScorePrefab != null}, Canvas: {popupCanvasLayer != null}");
+        return;
+    }
+
+    var popupGO = Instantiate(popupScorePrefab, popupCanvasLayer.transform);
+    Debug.Log($"✅ Popup GameObject instantiated: {popupGO.name}");
+    
+    var popup = popupGO.GetComponent<PopupScore>();
+    if (popup == null)
+    {
+        Debug.LogError("❌ PopupScore component not found on prefab!");
+        return;
+    }
+
+    Color color;
+    string display;
+    
+    if (isBonusDamage)
+    {
+        color = new Color(1f, 0.5f, 0f);
+        display = $"+{damage} BONUS!";
+    }
+    else
+    {
+        color = Color.red;
+        display = $"-{damage}";
+    }
+    
+    Debug.Log($"💥 Initializing popup: '{display}' color: {color}");
+    popup.Initialize(display, color, worldPos);
+    Debug.Log($"✅ Popup initialized successfully!");
 }
+
 
     void Awake()
     {

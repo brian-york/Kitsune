@@ -28,8 +28,8 @@ public class TileEffectHandler : MonoBehaviour
         switch (tile.tileEffect)
         {
             case TileEffect.Flame:
-                ProcessFlameEffect(tile);
-                break;
+    ProcessFlameEffect(tile, row, col);
+    break;
 
             case TileEffect.Solar:
                 ProcessSolarEffect(row, col);
@@ -51,7 +51,7 @@ public class TileEffectHandler : MonoBehaviour
         TrackTileInRegion(tile, row, col);
     }
 
-  private void ProcessFlameEffect(TileData tile)
+  private void ProcessFlameEffect(TileData tile, int row, int col)
 {
     flameTilesOnBoard.Add(tile);
     int flameCount = flameTilesOnBoard.Count;
@@ -61,9 +61,29 @@ public class TileEffectHandler : MonoBehaviour
     
     if (EnemyManager.Instance != null)
     {
-        EnemyManager.Instance.OnRegionDamaged(damage);  // ✅ Use existing method
+        Vector3 cellPosition = GetCellWorldPosition(row, col);
+        EnemyManager.Instance.OnRegionDamaged(damage, cellPosition);
     }
 }
+private Vector3 GetCellWorldPosition(int row, int col)
+{
+    GameObject sudokuGrid = GameObject.Find("SudokuGrid");
+    if (sudokuGrid == null)
+    {
+        Debug.LogWarning("⚠️ SudokuGrid not found! Using screen center for popup.");
+        return new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, 0f);
+    }
+
+    Transform cellTransform = sudokuGrid.transform.Find($"Cell_{row}_{col}");
+    if (cellTransform != null)
+    {
+        return cellTransform.position;
+    }
+
+    Debug.LogWarning($"⚠️ Cell_{row}_{col} not found! Using screen center for popup.");
+    return new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, 0f);
+}
+
 
     private void ProcessSolarEffect(int row, int col)
     {

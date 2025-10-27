@@ -108,22 +108,40 @@ public class GridSpawner : MonoBehaviour
         }
     }
 
-    public void CreateTile(TileData tileData)
+public void CreateTile(TileData tileData)
+{
+    GameObject tileObj = Instantiate(tileButton, tilePoolTransform);
+    TileDragHandler handler = tileObj.GetComponent<TileDragHandler>();
+    
+    if (handler != null)
     {
-        GameObject tileObj = Instantiate(tileButton, tilePoolTransform);
-        TileDragHandler handler = tileObj.GetComponent<TileDragHandler>();
-        if (handler != null) handler.SetTileData(tileData);
-        else Debug.LogError("TileDragHandler missing from tileButton prefab!");
+        handler.SetTileData(tileData);
+        
+        if (EnemyManager.Instance != null && EnemyManager.Instance.currentEnemy != null)
+        {
+            handler.EnableTimer(EnemyManager.Instance.currentEnemy.hasTurnTimer);
+        }
     }
+    else
+    {
+        Debug.LogError("TileDragHandler missing from tileButton prefab!");
+    }
+}
+
 
    public void RefillTileHand()
 {
     int baseTileCount = 3;
     int bonusTiles = 0;
-    
-    if (CharacterManager.Instance != null)
+
+        if (CharacterManager.Instance != null)
+        {
+            bonusTiles = CharacterManager.Instance.GetPassiveValue(PassiveAbilityType.ExtraTilesPerDraw);
+        }
+     int enemyReduction = 0;
+    if (EnemyStatusManager.Instance != null)
     {
-        bonusTiles = CharacterManager.Instance.GetPassiveValue(PassiveAbilityType.ExtraTilesPerDraw);
+        enemyReduction = EnemyStatusManager.Instance.handSizeReduction;
     }
     
     int targetTileCount = baseTileCount + bonusTiles;

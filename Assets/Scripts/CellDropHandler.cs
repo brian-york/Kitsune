@@ -7,40 +7,57 @@ public class CellDropHandler : MonoBehaviour, IDropHandler
     public int col;
 
     public void OnDrop(PointerEventData eventData)
+{
+    TileDragHandler tile = eventData.pointerDrag?.GetComponent<TileDragHandler>();
+    if (tile == null) return;
+
+    CellController cellController = GetComponent<CellController>();
+    PuzzleManager puzzleManager = FindFirstObjectByType<PuzzleManager>();
+    ScoreManager scoreManager = FindFirstObjectByType<ScoreManager>();
+    GameManager gm = FindFirstObjectByType<GameManager>();
+
+    bool isValidPlacement = ValidateBasicDrop(tile, cellController, puzzleManager);
+
+    if (isValidPlacement)
     {
-        TileDragHandler tile = eventData.pointerDrag?.GetComponent<TileDragHandler>();
-        if (tile == null) return;
-
-        CellController cellController = GetComponent<CellController>();
-        PuzzleManager puzzleManager = FindFirstObjectByType<PuzzleManager>();
-        ScoreManager scoreManager = FindFirstObjectByType<ScoreManager>();
-        GameManager gm = FindFirstObjectByType<GameManager>();
-
-        bool isValidPlacement = ValidateBasicDrop(tile, cellController, puzzleManager);
-        
-        if (isValidPlacement)
+        ProcessNarrativeTriggers(tile, cellController, scoreManager, gm);
+        UpdatePuzzleState(tile, cellController, puzzleManager);
+        if (TileEffectHandler.Instance != null)
         {
-            ProcessNarrativeTriggers(tile, cellController, scoreManager, gm);
-            UpdatePuzzleState(tile, cellController, puzzleManager);
-             if (TileEffectHandler.Instance != null)
+            TileEffectHandler.Instance.ProcessOnPlacementEffect(tile.tileData, row, col);
+        }
+        CalculateAndAwardScore(tile, puzzleManager, scoreManager, gm);
+
+        RegionTracker.Instance?.CheckRegionCompletion(row, col);
+
+        EnemyManager.Instance?.OnTilePlaced(tile.tileData, true);
+
+        EnemyStatusManager statusMgr = EnemyStatusManager.Instance;
+        statusMgr?.OnTilePlaced();
+        
+        EnemyManager enemyManager = FindFirstObjectByType<EnemyManager>();
+        if (enemyManager != null)
+        {
+            enemyManager.TakeTileDamage(tile.tileData.number, cellController.transform.position);
+        }
+    }
+    else
     {
-        TileEffectHandler.Instance.ProcessOnPlacementEffect(tile.tileData, row, col);
-    }
-            CalculateAndAwardScore(tile, puzzleManager, scoreManager, gm);
-            
-            RegionTracker.Instance?.CheckRegionCompletion(row, col);
-            
-            EnemyManager.Instance?.OnTilePlaced(tile.tileData, true);
-        }
-        else
-        {
-            EnemyManager.Instance?.OnTilePlaced(tile.tileData, false);
-        }
-        
-        DestroyTileAndRefill(tile);
+        EnemyManager.Instance?.OnTilePlaced(tile.tileData, false);
     }
 
- 
+    EnemyStatusManager statusMgr2 = EnemyStatusManager.Instance;
+    if (statusMgr2 != null && statusMgr2.hasCorruptedTile && statusMgr2.corruptedTile == tile)
+    {
+        statusMgr2.ClearCorruptedTile();
+        Debug.Log(isValidPlacement 
+            ? "✅ Corrupted tile played successfully!" 
+            : "💀 Corrupted tile destroyed (invalid placement)");
+    }
+
+    DestroyTileAndRefill(tile);
+}
+
 
     private void ProcessNarrativeTriggers(TileDragHandler tile, CellController cellController, ScoreManager scoreManager, GameManager gm)
     {
@@ -76,7 +93,7 @@ public class CellDropHandler : MonoBehaviour, IDropHandler
         cellController.narrativeTriggered = true;
     }
 
-      private bool ValidateBasicDrop(TileDragHandler tile, CellController cellController, PuzzleManager puzzleManager)
+    private bool ValidateBasicDrop(TileDragHandler tile, CellController cellController, PuzzleManager puzzleManager)
     {
         if (cellController != null && cellController.locked)
         {
@@ -84,7 +101,34 @@ public class CellDropHandler : MonoBehaviour, IDropHandler
             return false;
         }
 
+        EnemyStatusManager statusMgr = EnemyStatusManager.Instance;
+        
+        if (statusMgr != null && statusMgr.hasCorruptedTile)
+        {
+            if (statusMgr.corruptedTile != tile)
+            {
+                Debug.Log("💀 You must play the corrupted tile first!");
+                return false;
+            }
+        }
+
+        if (statusMgr != null && statusMgr.isRestrictedToBox)
+        {
+            int cellBoxIndex = (row / 3) * 3 + (col / 3);
+            if (cellBoxIndex != statusMgr.restrictedBoxIndex)
+            {
+                Debug.Log($"🔒 You can only play in box {statusMgr.restrictedBoxIndex}!");
+                return false;
+            }
+        }
+
         Debug.Log($"Tile dropped on cell [{row},{col}] with value {tile.tileValue}");
+        
+        if (tile.tileValue == 0)
+        {
+            Debug.Log("👻 Blank tile played - no effect!");
+            return false;
+        }
 
         if (puzzleManager != null && !puzzleManager.IsValid(row, col, tile.tileValue))
         {
@@ -95,31 +139,31 @@ public class CellDropHandler : MonoBehaviour, IDropHandler
         return true;
     }
 
-   private bool ValidateNarrativeCondition(TileDragHandler tile, CellController cellController)
-{
-    if (cellController.narrativeCondition == null) return true;
-    if (!cellController.narrativeCondition.requiresSpecificTile) return true;
-
-    if (cellController.narrativeCondition.requiredTileNumber > 0)
+    private bool ValidateNarrativeCondition(TileDragHandler tile, CellController cellController)
     {
-        if (tile.tileValue != cellController.narrativeCondition.requiredTileNumber)
-        {
-            Debug.Log($"❌ Narrative condition failed at [{row},{col}]. Required number: {cellController.narrativeCondition.requiredTileNumber}, Got: {tile.tileValue}");
-            return false;
-        }
-    }
+        if (cellController.narrativeCondition == null) return true;
+        if (!cellController.narrativeCondition.requiresSpecificTile) return true;
 
-    if (cellController.narrativeCondition.requiredTileEffect != TileEffect.None)
-    {
-        if (tile.tileData.tileEffect != cellController.narrativeCondition.requiredTileEffect)
+        if (cellController.narrativeCondition.requiredTileNumber > 0)
         {
-            Debug.Log($"❌ Narrative condition failed at [{row},{col}]. Required effect: {cellController.narrativeCondition.requiredTileEffect}, Got: {tile.tileData.tileEffect}");
-            return false;
+            if (tile.tileValue != cellController.narrativeCondition.requiredTileNumber)
+            {
+                Debug.Log($"❌ Narrative condition failed at [{row},{col}]. Required number: {cellController.narrativeCondition.requiredTileNumber}, Got: {tile.tileValue}");
+                return false;
+            }
         }
-    }
 
-    return true;
-}
+        if (cellController.narrativeCondition.requiredTileEffect != TileEffect.None)
+        {
+            if (tile.tileData.tileEffect != cellController.narrativeCondition.requiredTileEffect)
+            {
+                Debug.Log($"❌ Narrative condition failed at [{row},{col}]. Required effect: {cellController.narrativeCondition.requiredTileEffect}, Got: {tile.tileData.tileEffect}");
+                return false;
+            }
+        }
+
+        return true;
+    }
 
     private void ProcessCurrencyCell(CellController cellController, ScoreManager scoreManager)
     {
@@ -159,26 +203,7 @@ public class CellDropHandler : MonoBehaviour, IDropHandler
         if (scoringManager == null || scoreManager == null) return;
 
         TileScoreBreakdown breakdown = scoringManager.CalculateTileScore(row, col, tile.tileData, puzzleManager.playerGrid);
-        Vector3 cellWorldPos = transform.position;
-
-        float delay = 0f;
-        scoreManager.ShowPopupDelayed(breakdown.basePoints, "Tile", cellWorldPos + Vector3.zero, delay += 0f);
         
-        if (breakdown.boxSum > 0)
-            scoreManager.ShowPopupDelayed(breakdown.boxSum, "Box Sum", cellWorldPos + new Vector3(0, 50, 0), delay += 0.5f);
-        
-        if (breakdown.rowSum > 0)
-            scoreManager.ShowPopupDelayed(breakdown.rowSum, "Row Sum", cellWorldPos + new Vector3(-50, 0, 0), delay += 0.5f);
-        
-        if (breakdown.colSum > 0)
-            scoreManager.ShowPopupDelayed(breakdown.colSum, "Col Sum", cellWorldPos + new Vector3(0, -50, 0), delay += 0.5f);
-        
-        if (breakdown.tileEffectBonus > 0)
-            scoreManager.ShowPopupDelayed(breakdown.tileEffectBonus, "Tile Bonus", cellWorldPos + new Vector3(50, 0, 0), delay += 0.5f);
-        
-        if (breakdown.relicBonus > 0)
-            scoreManager.ShowPopupDelayed(breakdown.relicBonus, "Relic Bonus", cellWorldPos + new Vector3(0, 100, 0), delay += 0.5f);
-
         scoreManager.AddScore(breakdown.totalPoints);
     }
 

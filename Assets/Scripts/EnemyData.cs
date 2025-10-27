@@ -15,7 +15,19 @@ public class EnemyData : ScriptableObject
     
     [Header("Ability")]
     public EnemyAbility ability;
-    
+
     [Header("Rewards")]
     public int baseMonReward = 30;
+   [Header("Advanced Ability Settings")]
+    public RegionType immuneToRegionType = RegionType.Row;
+    public int shieldAmount = 50;
+    public int restrictedBoxIndex = 0;
+
+    [Header("Turn Timer Ability")]
+public bool hasTurnTimer = false;
+[Tooltip("Time in seconds before tile is destroyed if not placed")]
+public float turnTimerDuration = 20f;
+[Tooltip("Warning threshold in seconds (visual feedback intensifies)")]
+public float turnTimerWarningThreshold = 5f;
+
 }

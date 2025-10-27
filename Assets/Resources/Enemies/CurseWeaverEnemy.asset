@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e89762141d1d49a48a5bc879f39bbc50, type: 3}
+  m_Name: CurseWeaverEnemy
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyData
+  enemyName: Curse Weaver
+  enemySprite: {fileID: 0}
+  flavorText: 
+  maxHP: 200
+  startingBlockedCells: 2
+  ability:
+    abilityName: Hex
+    description: The weaver forces you to play a tile from your hand before anything
+      else.
+    trigger: 3
+    triggerEveryNTurns: 3
+    requiredTileNumber: 0
+    requiredTileEffect: 0
+    harmonyThreshold: 0
+    cellsFilledThreshold: 0
+    checkTileNumberLessThan: 0
+    effect: 7
+    effectValue: 1
+  baseMonReward: 30
+  immuneToRegionType: 0
+  shieldAmount: 50
+  restrictedBoxIndex: 0

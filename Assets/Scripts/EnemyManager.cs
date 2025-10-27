@@ -19,6 +19,7 @@ public class EnemyManager : MonoBehaviour
     public TextMeshProUGUI enemyAbilityText;
     public GameObject abilityNotificationPanel;
     public TextMeshProUGUI abilityNotificationText;
+    public EnemyHPUI enemyHPUI;
     
     private PuzzleManager puzzleManager;
     private UIManager uiManager;
@@ -36,6 +37,9 @@ public class EnemyManager : MonoBehaviour
     {
         puzzleManager = FindFirstObjectByType<PuzzleManager>();
         uiManager = FindFirstObjectByType<UIManager>();
+        
+        if (enemyHPUI == null)
+            enemyHPUI = FindFirstObjectByType<EnemyHPUI>();
         
         if (abilityNotificationPanel != null)
             abilityNotificationPanel.SetActive(false);
@@ -70,6 +74,13 @@ public class EnemyManager : MonoBehaviour
 
         ApplyStartingBlockedCells();
         UpdateEnemyUI();
+
+        if (enemyHPUI != null)
+        {
+            enemyHPUI.Initialize(currentEnemy.enemyName, enemyCurrentHP, currentEnemy.maxHP);
+        }
+        
+        ConfigureTurnTimer(); 
     }
     
     
@@ -125,6 +136,88 @@ public class EnemyManager : MonoBehaviour
     
     Debug.Log($"🚫 Enemy started with {cellsBlocked} blocked cells");
 }
+
+void BlockRandomCells(int count)
+{
+    if (puzzleManager == null)
+    {
+        Debug.LogError("❌ PuzzleManager is null!");
+        return;
+    }
+    
+    int cellsBlocked = 0;
+    int maxAttempts = count * 5;
+    int attempts = 0;
+    
+    while (cellsBlocked < count && attempts < maxAttempts)
+    {
+        int row = Random.Range(0, 9);
+        int col = Random.Range(0, 9);
+        
+        attempts++;
+        
+        if (!puzzleManager.blockedCells[row, col] &&
+            puzzleManager.playerGrid[row, col] == 0)
+        {
+            puzzleManager.blockedCells[row, col] = true;
+            int index = row * 9 + col;
+            puzzleManager.cellStates[index] = CellState.Blocked;
+            
+            CellController[] allCells = FindObjectsByType<CellController>(FindObjectsSortMode.None);
+            foreach (var cell in allCells)
+            {
+                if (cell.row == row && cell.column == col)
+                {
+                    cell.locked = true;
+                    cell.isBlocked = true;
+                    cell.SetBlocked(true);
+                    Debug.Log($"🚫 Blocked cell [{row},{col}] via enemy ability");
+                    break;
+                }
+            }
+            
+            cellsBlocked++;
+        }
+    }
+    
+    if (cellsBlocked < count)
+    {
+        Debug.LogWarning($"⚠️ Only blocked {cellsBlocked}/{count} cells (ran out of valid cells)");
+    }
+    else
+    {
+        Debug.Log($"🚫 Enemy blocked {cellsBlocked} cells!");
+    }
+}
+
+public void TakeTileDamage(int tileValue, Vector3 damageSourcePosition)
+{
+    if (!enemyLoaded || currentEnemy == null) return;
+
+    int damage = tileValue;
+    
+    enemyCurrentHP -= damage;
+    if (enemyCurrentHP < 0) enemyCurrentHP = 0;
+    
+    Debug.Log($"💥 Enemy took {damage} tile damage! HP: {enemyCurrentHP}/{currentEnemy.maxHP}");
+    
+    ScoreManager scoreManager = FindFirstObjectByType<ScoreManager>();
+    if (scoreManager != null)
+    {
+        scoreManager.ShowDamagePopup(damage, damageSourcePosition, false);
+    }
+    
+    if (enemyHPUI != null)
+    {
+        enemyHPUI.UpdateHP(enemyCurrentHP);
+    }
+    
+    if (enemyCurrentHP <= 0)
+    {
+        OnEnemyDefeated();
+    }
+}
+
 
     
    public void OnTilePlaced(TileData tile, bool wasValid)
@@ -194,22 +287,63 @@ public class EnemyManager : MonoBehaviour
 }
 
     
-    public void OnRegionDamaged(int damage)
+public void OnRegionDamaged(int damage, Vector3 cellPosition)
+{
+    Debug.Log($"🔥 EnemyManager.OnRegionDamaged called with damage: {damage}");
+    
+    if (!enemyLoaded || currentEnemy == null)
     {
-        enemyCurrentHP -= damage;
-        
-        if (enemyCurrentHP < 0)
-            enemyCurrentHP = 0;
-        
-        Debug.Log($"💥 Enemy took {damage} damage! HP: {enemyCurrentHP}/{currentEnemy.maxHP}");
-        
-        UpdateEnemyUI();
-        
-        if (enemyCurrentHP <= 0)
-        {
-            OnEnemyDefeated();
-        }
+        Debug.LogWarning("⚠️ No enemy loaded! Cannot apply region damage.");
+        return;
     }
+    
+    enemyCurrentHP -= damage;
+    
+    if (enemyCurrentHP < 0)
+        enemyCurrentHP = 0;
+    
+    Debug.Log($"💥 Enemy took {damage} region damage! HP: {enemyCurrentHP}/{currentEnemy.maxHP}");
+    
+    ScoreManager scoreManager = FindFirstObjectByType<ScoreManager>();
+    Debug.Log($"📍 ScoreManager found: {scoreManager != null}");
+
+    if (scoreManager != null && damage > 0)
+    {
+        StartCoroutine(ShowDelayedRegionPopup(scoreManager, damage, cellPosition));
+    }
+    else
+    {
+        Debug.LogWarning($"⚠️ Popup NOT shown! ScoreManager: {scoreManager != null}, Damage: {damage}");
+    }
+    
+    UpdateEnemyUI();
+
+    if (enemyCurrentHP <= 0)
+    {
+        OnEnemyDefeated();
+    }
+}
+private IEnumerator ShowDelayedRegionPopup(ScoreManager scoreManager, int damage, Vector3 cellPosition)
+{
+    yield return new WaitForSeconds(0.5f);
+    
+    Debug.Log($"📍 Showing delayed region damage popup at cell position: {cellPosition}");
+    scoreManager.ShowDamagePopup(damage, cellPosition, true);
+}
+
+private void ConfigureTurnTimer()
+{
+    if (currentEnemy == null) return;
+
+    TileDragHandler[] allTiles = FindObjectsByType<TileDragHandler>(FindObjectsSortMode.None);
+    foreach (var tile in allTiles)
+    {
+        tile.EnableTimer(currentEnemy.hasTurnTimer);
+    }
+
+    Debug.Log($"⏱️ Turn timer {(currentEnemy.hasTurnTimer ? "ENABLED" : "DISABLED")} for {currentEnemy.enemyName}");
+}
+
     
     void OnEnemyDefeated()
     {
@@ -217,70 +351,62 @@ public class EnemyManager : MonoBehaviour
         CalculateRewards();
     }
     
-    void ExecuteAbility()
-    {
-        if (currentEnemy == null || currentEnemy.ability == null) return;
-        
-        Debug.Log($"⚡ Enemy ability triggered: {currentEnemy.ability.abilityName} ({currentEnemy.ability.effect})");
-        
-        ShowAbilityNotification(currentEnemy.ability.abilityName);
-        
-        switch (currentEnemy.ability.effect)
-        {
-            case AbilityEffect.BlockRandomCell:
-                BlockRandomCells(currentEnemy.ability.effectValue);
-                break;
-                
-            case AbilityEffect.StealMon:
-                StealCurrency(currentEnemy.ability.effectValue);
-                break;
-                
-            case AbilityEffect.AddBlockedCells:
-                BlockRandomCells(currentEnemy.ability.effectValue);
-                break;
-        }
-    }
-    
-   void BlockRandomCells(int count)
+   void ExecuteAbility()
 {
-    if (puzzleManager == null) return;
+    if (currentEnemy == null || currentEnemy.ability == null) return;
     
-    int cellsBlocked = 0;
-    int maxAttempts = count * 10;
-    int attempts = 0;
+    Debug.Log($"⚡ Enemy ability triggered: {currentEnemy.ability.abilityName} ({currentEnemy.ability.effect})");
     
-    while (cellsBlocked < count && attempts < maxAttempts)
+    ShowAbilityNotification(currentEnemy.ability.abilityName);
+    
+    EnemyStatusManager statusMgr = EnemyStatusManager.Instance;
+    
+    switch (currentEnemy.ability.effect)
     {
-        int row = Random.Range(0, 9);
-        int col = Random.Range(0, 9);
-        
-        attempts++;
-        
-        if (!puzzleManager.blockedCells[row, col] &&
-            puzzleManager.playerGrid[row, col] == 0)
-        {
-            puzzleManager.blockedCells[row, col] = true;
-            int index = row * 9 + col;
-            puzzleManager.cellStates[index] = CellState.Blocked;
+        case AbilityEffect.BlockRandomCell:
+            BlockRandomCells(currentEnemy.ability.effectValue);
+            break;
             
-            CellController[] allCells = FindObjectsByType<CellController>(FindObjectsSortMode.None);
-            foreach (var cell in allCells)
-            {
-                if (cell.row == row && cell.column == col)
-                {
-                    cell.locked = true;
-                    cell.isBlocked = true;
-                    cell.SetBlocked(true);
-                    Debug.Log($"🚫 Blocked cell [{row},{col}] via ability");
-                    break;
-                }
-            }
+        case AbilityEffect.StealMon:
+            StealCurrency(currentEnemy.ability.effectValue);
+            break;
             
-            cellsBlocked++;
-        }
+        case AbilityEffect.AddBlockedCells:
+            BlockRandomCells(currentEnemy.ability.effectValue);
+            break;
+            
+        case AbilityEffect.CorruptTileInHand:
+            if (statusMgr != null) statusMgr.CorruptRandomTileInHand();
+            break;
+            
+        case AbilityEffect.TransformHandToNumber:
+            if (statusMgr != null) statusMgr.TransformHandToNumber(currentEnemy.ability.effectValue);
+            break;
+            
+        case AbilityEffect.RestrictToBox:
+            if (statusMgr != null) statusMgr.RestrictToBox(currentEnemy.restrictedBoxIndex, currentEnemy.ability.effectValue);
+            break;
+            
+        case AbilityEffect.DestroyRegion:
+            if (statusMgr != null) statusMgr.DestroyRandomRegion();
+            break;
+            
+        case AbilityEffect.AddBlankTiles:
+            if (statusMgr != null) statusMgr.AddBlankTilesToHand(currentEnemy.ability.effectValue);
+            break;
+            
+        case AbilityEffect.ShrinkHandSize:
+            if (statusMgr != null) statusMgr.ReduceHandSize(currentEnemy.ability.effectValue, 5);
+            break;
+            
+        case AbilityEffect.DamageImmunity:
+            if (statusMgr != null) statusMgr.SetDamageImmunity(currentEnemy.immuneToRegionType);
+            break;
+            
+        case AbilityEffect.DamageShield:
+            if (statusMgr != null) statusMgr.ActivateDamageShield(currentEnemy.shieldAmount);
+            break;
     }
-    
-    Debug.Log($"🚫 Ability blocked {cellsBlocked} random cells");
 }
 
     

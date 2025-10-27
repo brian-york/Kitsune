@@ -21,7 +21,17 @@ public enum AbilityEffect
     ShuffleHand,
     DestroyTile,
     AddBlockedCells,
-    ForceDiscard
+    ForceDiscard,
+    
+    // NEW EFFECTS
+    CorruptTileInHand,
+    TransformHandToNumber,
+    RestrictToBox,
+    DestroyRegion,
+    AddBlankTiles,
+    ShrinkHandSize,
+    DamageImmunity,
+    DamageShield
 }
 
 [System.Serializable]

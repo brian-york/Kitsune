@@ -34,6 +34,15 @@ public class UIManager : MonoBehaviour
         if (gameOverPanel != null)
             gameOverPanel.SetActive(true);
     }
+    public void ShowFloatingText(string message, Vector3 worldPosition, Color color)
+{
+    EnemyStatusVisualizer visualizer = EnemyStatusVisualizer.Instance;
+    if (visualizer != null)
+    {
+        visualizer.ShowFloatingText(message, worldPosition, color);
+    }
+}
+
 
     public void ReturnToMap()
     {
