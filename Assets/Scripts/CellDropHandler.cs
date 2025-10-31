@@ -1,63 +1,64 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
 
-public class CellDropHandler : MonoBehaviour, IDropHandler
+public class CellDropHandler : MonoBehaviour
 {
     public int row;
     public int col;
 
-    public void OnDrop(PointerEventData eventData)
-{
-    TileDragHandler tile = eventData.pointerDrag?.GetComponent<TileDragHandler>();
-    if (tile == null) return;
-
-    CellController cellController = GetComponent<CellController>();
-    PuzzleManager puzzleManager = FindFirstObjectByType<PuzzleManager>();
-    ScoreManager scoreManager = FindFirstObjectByType<ScoreManager>();
-    GameManager gm = FindFirstObjectByType<GameManager>();
-
-    bool isValidPlacement = ValidateBasicDrop(tile, cellController, puzzleManager);
-
-    if (isValidPlacement)
+    public void OnTileDrop(TileDragHandler tile)
     {
-        ProcessNarrativeTriggers(tile, cellController, scoreManager, gm);
-        UpdatePuzzleState(tile, cellController, puzzleManager);
-        if (TileEffectHandler.Instance != null)
-        {
-            TileEffectHandler.Instance.ProcessOnPlacementEffect(tile.tileData, row, col);
-        }
-        CalculateAndAwardScore(tile, puzzleManager, scoreManager, gm);
+        if (tile == null) return;
 
-        RegionTracker.Instance?.CheckRegionCompletion(row, col);
-
-        EnemyManager.Instance?.OnTilePlaced(tile.tileData, true);
-
-        EnemyStatusManager statusMgr = EnemyStatusManager.Instance;
-        statusMgr?.OnTilePlaced();
+        CellController cellController = GetComponent<CellController>();
+        CellControllerV2 cellControllerV2 = GetComponent<CellControllerV2>();
         
-        EnemyManager enemyManager = FindFirstObjectByType<EnemyManager>();
-        if (enemyManager != null)
+        PuzzleManager puzzleManager = FindFirstObjectByType<PuzzleManager>();
+        ScoreManager scoreManager = FindFirstObjectByType<ScoreManager>();
+        GameManager gm = FindFirstObjectByType<GameManager>();
+
+        bool isValidPlacement = ValidateBasicDrop(tile, cellController, cellControllerV2, puzzleManager);
+
+        if (isValidPlacement)
         {
-            enemyManager.TakeTileDamage(tile.tileData.number, cellController.transform.position);
+            ProcessNarrativeTriggers(tile, cellController, scoreManager, gm);
+            UpdatePuzzleState(tile, cellController, cellControllerV2, puzzleManager);
+            
+            if (TileEffectHandler.Instance != null)
+            {
+                TileEffectHandler.Instance.ProcessOnPlacementEffect(tile.tileData, row, col);
+            }
+            
+            CalculateAndAwardScore(tile, puzzleManager, scoreManager, gm);
+
+            RegionTracker.Instance?.CheckRegionCompletion(row, col);
+
+            EnemyManager.Instance?.OnTilePlaced(tile.tileData, true);
+
+            EnemyStatusManager statusMgr = EnemyStatusManager.Instance;
+            statusMgr?.OnTilePlaced();
+            
+            EnemyManager enemyManager = FindFirstObjectByType<EnemyManager>();
+            if (enemyManager != null)
+            {
+                enemyManager.TakeTileDamage(tile.tileData.number, transform.position);
+            }
         }
-    }
-    else
-    {
-        EnemyManager.Instance?.OnTilePlaced(tile.tileData, false);
-    }
+        else
+        {
+            EnemyManager.Instance?.OnTilePlaced(tile.tileData, false);
+        }
 
-    EnemyStatusManager statusMgr2 = EnemyStatusManager.Instance;
-    if (statusMgr2 != null && statusMgr2.hasCorruptedTile && statusMgr2.corruptedTile == tile)
-    {
-        statusMgr2.ClearCorruptedTile();
-        Debug.Log(isValidPlacement 
-            ? "✅ Corrupted tile played successfully!" 
-            : "💀 Corrupted tile destroyed (invalid placement)");
+        EnemyStatusManager statusMgr2 = EnemyStatusManager.Instance;
+        if (statusMgr2 != null && statusMgr2.hasCorruptedTile && statusMgr2.corruptedTile == tile)
+        {
+            statusMgr2.ClearCorruptedTile();
+            Debug.Log(isValidPlacement 
+                ? "✅ Corrupted tile played successfully!" 
+                : "💀 Corrupted tile destroyed (invalid placement)");
+        }
+
+        DestroyTileAndRefill(tile);
     }
-
-    DestroyTileAndRefill(tile);
-}
-
 
     private void ProcessNarrativeTriggers(TileDragHandler tile, CellController cellController, ScoreManager scoreManager, GameManager gm)
     {
@@ -93,9 +94,21 @@ public class CellDropHandler : MonoBehaviour, IDropHandler
         cellController.narrativeTriggered = true;
     }
 
-    private bool ValidateBasicDrop(TileDragHandler tile, CellController cellController, PuzzleManager puzzleManager)
+    private bool ValidateBasicDrop(TileDragHandler tile, CellController cellController, CellControllerV2 cellControllerV2, PuzzleManager puzzleManager)
     {
+        bool isLocked = false;
+        
         if (cellController != null && cellController.locked)
+        {
+            isLocked = true;
+        }
+        
+        if (cellControllerV2 != null && cellControllerV2.locked)
+        {
+            isLocked = true;
+        }
+
+        if (isLocked)
         {
             Debug.Log($"Cell [{row},{col}] is locked. Rejecting drop.");
             return false;
@@ -191,10 +204,11 @@ public class CellDropHandler : MonoBehaviour, IDropHandler
         }
     }
 
-    private void UpdatePuzzleState(TileDragHandler tile, CellController cellController, PuzzleManager puzzleManager)
+    private void UpdatePuzzleState(TileDragHandler tile, CellController cellController, CellControllerV2 cellControllerV2, PuzzleManager puzzleManager)
     {
         puzzleManager?.UpdateCell(row, col, tile.tileValue);
         cellController?.SetValue(tile.tileValue, true);
+        cellControllerV2?.UpdateValue(tile.tileValue);
     }
 
     private void CalculateAndAwardScore(TileDragHandler tile, PuzzleManager puzzleManager, ScoreManager scoreManager, GameManager gm)

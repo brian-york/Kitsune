@@ -28,8 +28,8 @@ public class TileEffectHandler : MonoBehaviour
         switch (tile.tileEffect)
         {
             case TileEffect.Flame:
-    ProcessFlameEffect(tile, row, col);
-    break;
+                ProcessFlameEffect(tile, row, col);
+                break;
 
             case TileEffect.Solar:
                 ProcessSolarEffect(row, col);
@@ -51,39 +51,62 @@ public class TileEffectHandler : MonoBehaviour
         TrackTileInRegion(tile, row, col);
     }
 
-  private void ProcessFlameEffect(TileData tile, int row, int col)
-{
-    flameTilesOnBoard.Add(tile);
-    int flameCount = flameTilesOnBoard.Count;
-    int damage = flameCount;
+    private void ProcessFlameEffect(TileData tile, int row, int col)
+    {
+        flameTilesOnBoard.Add(tile);
+        int flameCount = flameTilesOnBoard.Count;
+        int damage = flameCount;
 
-    Debug.Log($"🔥 Flame tile placed! Total Flames: {flameCount}, Dealing {damage} damage");
-    
-    if (EnemyManager.Instance != null)
-    {
-        Vector3 cellPosition = GetCellWorldPosition(row, col);
-        EnemyManager.Instance.OnRegionDamaged(damage, cellPosition);
-    }
-}
-private Vector3 GetCellWorldPosition(int row, int col)
-{
-    GameObject sudokuGrid = GameObject.Find("SudokuGrid");
-    if (sudokuGrid == null)
-    {
-        Debug.LogWarning("⚠️ SudokuGrid not found! Using screen center for popup.");
-        return new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, 0f);
+        Debug.Log($"🔥 Flame tile placed! Total Flames: {flameCount}, Dealing {damage} damage");
+        
+        if (EnemyManager.Instance != null)
+        {
+            Vector3 cellPosition = GetCellWorldPosition(row, col);
+            EnemyManager.Instance.OnRegionDamaged(damage, cellPosition);
+        }
     }
 
-    Transform cellTransform = sudokuGrid.transform.Find($"Cell_{row}_{col}");
-    if (cellTransform != null)
+    private Vector3 GetCellWorldPosition(int row, int col)
     {
-        return cellTransform.position;
+        GridSpawner gridSpawner = FindFirstObjectByType<GridSpawner>();
+        
+        if (gridSpawner != null && gridSpawner.useNewGridSystem)
+        {
+            GameObject gridContainer = GameObject.Find("GridContainer");
+            if (gridContainer == null)
+            {
+                Debug.LogWarning("⚠️ GridContainer not found! Using screen center for popup.");
+                return new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, 0f);
+            }
+
+            Transform cellTransform = gridContainer.transform.Find($"Cell_{row}_{col}");
+            if (cellTransform != null)
+            {
+                return cellTransform.position;
+            }
+
+            Debug.LogWarning($"⚠️ Cell_{row}_{col} not found in GridContainer! Using screen center.");
+            return new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, 0f);
+        }
+        else
+        {
+            GameObject sudokuGrid = GameObject.Find("SudokuGrid");
+            if (sudokuGrid == null)
+            {
+                Debug.LogWarning("⚠️ SudokuGrid not found! Using screen center for popup.");
+                return new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, 0f);
+            }
+
+            Transform cellTransform = sudokuGrid.transform.Find($"Cell_{row}_{col}");
+            if (cellTransform != null)
+            {
+                return cellTransform.position;
+            }
+
+            Debug.LogWarning($"⚠️ Cell_{row}_{col} not found! Using screen center for popup.");
+            return new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, 0f);
+        }
     }
-
-    Debug.LogWarning($"⚠️ Cell_{row}_{col} not found! Using screen center for popup.");
-    return new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, 0f);
-}
-
 
     private void ProcessSolarEffect(int row, int col)
     {
@@ -106,11 +129,7 @@ private Vector3 GetCellWorldPosition(int row, int col)
         {
             puzzleManager.UpdateCell(targetCell.x, targetCell.y, validNumber);
             
-            CellController cell = GetCellController(targetCell.x, targetCell.y);
-            if (cell != null)
-            {
-                cell.SetValue(validNumber, true);
-            }
+            UpdateCellVisuals(targetCell.x, targetCell.y, validNumber, true);
 
             Debug.Log($"☀️ Solar: Filled [{targetCell.x},{targetCell.y}] with {validNumber}");
         }
@@ -136,11 +155,7 @@ private Vector3 GetCellWorldPosition(int row, int col)
             puzzleManager.blockedCells[targetCell.x, targetCell.y] = true;
             puzzleManager.cellStates[targetCell.x * 9 + targetCell.y] = CellState.Blocked;
 
-            CellController cell = GetCellController(targetCell.x, targetCell.y);
-            if (cell != null)
-            {
-                cell.SetBlocked(true);
-            }
+            BlockCell(targetCell.x, targetCell.y);
 
             Debug.Log($"🌙 Lunar: Blocked [{targetCell.x},{targetCell.y}]");
         }
@@ -175,11 +190,7 @@ private Vector3 GetCellWorldPosition(int row, int col)
         puzzleManager.blockedCells[targetCell.x, targetCell.y] = true;
         puzzleManager.cellStates[targetCell.x * 9 + targetCell.y] = CellState.Blocked;
 
-        CellController cell = GetCellController(targetCell.x, targetCell.y);
-        if (cell != null)
-        {
-            cell.SetBlocked(true);
-        }
+        BlockCell(targetCell.x, targetCell.y);
 
         Debug.Log($"💀 Baned: Blocked random cell [{targetCell.x},{targetCell.y}]");
     }
@@ -287,9 +298,54 @@ private Vector3 GetCellWorldPosition(int row, int col)
         return 0;
     }
 
+    private void UpdateCellVisuals(int row, int col, int value, bool locked)
+    {
+        CellController cellController = GetCellController(row, col);
+        if (cellController != null)
+        {
+            cellController.SetValue(value, locked);
+            return;
+        }
+
+        CellControllerV2 cellControllerV2 = GetCellControllerV2(row, col);
+        if (cellControllerV2 != null)
+        {
+            cellControllerV2.SetValue(value, locked);
+        }
+    }
+
+    private void BlockCell(int row, int col)
+    {
+        CellController cellController = GetCellController(row, col);
+        if (cellController != null)
+        {
+            cellController.SetBlocked(true);
+            return;
+        }
+
+        CellControllerV2 cellControllerV2 = GetCellControllerV2(row, col);
+        if (cellControllerV2 != null)
+        {
+            cellControllerV2.SetBlocked(true);
+        }
+    }
+
     private CellController GetCellController(int row, int col)
     {
         CellController[] allCells = FindObjectsByType<CellController>(FindObjectsSortMode.None);
+        foreach (var cell in allCells)
+        {
+            if (cell.row == row && cell.column == col)
+            {
+                return cell;
+            }
+        }
+        return null;
+    }
+
+    private CellControllerV2 GetCellControllerV2(int row, int col)
+    {
+        CellControllerV2[] allCells = FindObjectsByType<CellControllerV2>(FindObjectsSortMode.None);
         foreach (var cell in allCells)
         {
             if (cell.row == row && cell.column == col)

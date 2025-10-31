@@ -19,6 +19,8 @@ public class TileDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     private float warningThreshold = 0f;
     private Coroutine timerCoroutine;
 
+    private CellControllerV2 currentHoveredCell;
+
     void Awake()
     {
         rectTransform = GetComponent<RectTransform>();
@@ -52,13 +54,72 @@ public class TileDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     public void OnDrag(PointerEventData eventData)
     {
         rectTransform.anchoredPosition += eventData.delta / transform.root.localScale.x;
+
+        Camera mainCamera = Camera.main;
+        if (mainCamera != null)
+        {
+            Vector2 worldPoint = mainCamera.ScreenToWorldPoint(eventData.position);
+            RaycastHit2D hit = Physics2D.Raycast(worldPoint, Vector2.zero);
+
+            CellControllerV2 newHoveredCell = null;
+
+            if (hit.collider != null)
+            {
+                newHoveredCell = hit.collider.GetComponent<CellControllerV2>();
+            }
+
+            if (newHoveredCell != currentHoveredCell)
+            {
+                if (currentHoveredCell != null)
+                {
+                    currentHoveredCell.OnHoverExit();
+                }
+
+                currentHoveredCell = newHoveredCell;
+
+                if (currentHoveredCell != null)
+                {
+                    currentHoveredCell.OnHoverEnter();
+                }
+            }
+        }
     }
 
     public void OnEndDrag(PointerEventData eventData)
     {
         canvasGroup.blocksRaycasts = true;
-        transform.SetParent(originalParent);
-        rectTransform.anchoredPosition = Vector2.zero;
+        
+        if (currentHoveredCell != null)
+        {
+            currentHoveredCell.OnHoverExit();
+            currentHoveredCell = null;
+        }
+
+        bool tileWasDropped = false;
+
+        Camera mainCamera = Camera.main;
+        if (mainCamera != null)
+        {
+            Vector2 worldPoint = mainCamera.ScreenToWorldPoint(eventData.position);
+            RaycastHit2D hit = Physics2D.Raycast(worldPoint, Vector2.zero);
+
+            if (hit.collider != null)
+            {
+                CellDropHandler dropHandler = hit.collider.GetComponent<CellDropHandler>();
+                if (dropHandler != null)
+                {
+                    Debug.Log($"✅ Physics2D hit cell at [{dropHandler.row},{dropHandler.col}]");
+                    dropHandler.OnTileDrop(this);
+                    tileWasDropped = true;
+                }
+            }
+        }
+
+        if (!tileWasDropped)
+        {
+            transform.SetParent(originalParent);
+            rectTransform.anchoredPosition = Vector2.zero;
+        }
 
         if (timerCoroutine != null)
         {
